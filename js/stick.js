@@ -89,7 +89,7 @@ class Stick {
   processFrame() {
     const imageData = this.ctx.getImageData(0, 0, this.width, this.height);
     const data = imageData.data;
-    if (Math.random() < 0.2) {
+    if (Math.random() < 0.5) {
       this.brightPx = [];
       for (let i = 0; i < data.length; i += 4) {
         const bright = 0.34 * data[i] + 0.5 * data[i + 1] + 0.16 * data[i + 2];
