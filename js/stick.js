@@ -222,8 +222,12 @@ class Stick {
       for (let y = 0; y < computeData.height; y++) {
         const index = 4 * (y * computeData.width + x);
         if (StickARUtils.isInRegion([x, y], StickARUtils.sortCorners(smallCorners))) {
-          const bright = 0.34 * data[index] + 0.5 * data[index + 1] + 0.16 * data[index + 2];
-          if (data[index + 2] - data[index] > 13 && bright < 190) {
+	  const dist = Math.sqrt(
+		Math.pow(data[index] - 96, 2) +
+		Math.pow(data[index + 1] - 130, 2) +
+		Math.pow(data[index + 2] - 180, 2)
+          );
+          if (dist < 50) {
             if (x > spriteMaxX) spriteMaxX = x;
             if (x < spriteMinX) spriteMinX = x;
             if (y > spriteMaxY) spriteMaxY = y;
