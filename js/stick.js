@@ -78,11 +78,12 @@ class OpticalFlow {
 class Stick {
   static init() {
     const stick = new Stick(
-      300,
-      210,
+      1200,
+      720,
       15,
       document.querySelector('video'),
-      document.querySelector('canvas')
+      document.getElementById('compute'),
+      document.getElementById('game')
     );
     stick.start();
 
@@ -113,10 +114,13 @@ class Stick {
     }
   }
 
-  constructor(width, height, framerate, video, canvas) {
+  constructor(width, height, framerate, video, computeCanvas, gameCanvas) {
+    this.sampleRate = 0.25;
     this.video = video;
-    this.canvas = canvas;
-    this.ctx = this.canvas.getContext('2d');
+    this.computeCanvas = computeCanvas;
+    this.gameCanvas = gameCanvas;
+    this.computeCtx = this.computeCanvas.getContext('2d');
+    this.gameCtx = this.gameCanvas.getContext('2d');
     this.isFullScreen = false;
     this.isStreaming = false;
     this.width = width;
@@ -128,6 +132,7 @@ class Stick {
     this.flow = new OpticalFlow({
       width: this.width,
       height: this.height,
+      sampleRate: this.sampleRate,
       win_size: 30,
       max_iterations: 20,
       epsilon: 0.05,
@@ -146,8 +151,10 @@ class Stick {
           const ratio = self.video.videoWidth / self.width;
           self.height = self.video.videoHeight / ratio;
         }
-        self.canvas.setAttribute('width', self.width);
-        self.canvas.setAttribute('height', self.height);
+        self.computeCanvas.setAttribute('width', self.width*self.sampleRate);
+        self.computeCanvas.setAttribute('height', self.height*self.sampleRate);
+        self.gameCanvas.setAttribute('width', self.width);
+        self.gameCanvas.setAttribute('height', self.height);
         self.isStreaming = true;
       }
     }, false);
@@ -159,14 +166,22 @@ class Stick {
         if (self.video.paused || self.video.ended) return;
         const start = +new Date();
 
-        self.ctx.fillRect(0, 0, self.width, self.height);
-        self.ctx.drawImage(self.video, 0, 0, self.width, self.height);
+        self.computeCtx.fillRect(
+          0, 0,
+          self.width/self.sampleRate, self.height
+        );
+        self.computeCtx.drawImage(
+          self.video, 0, 0,
+          self.width*self.sampleRate, self.height*self.sampleRate
+        );
+        self.gameCtx.fillRect(0, 0, self.width, self.height);
+        self.gameCtx.drawImage(self.video, 0, 0, self.width, self.height);
 
         self.processFrame();
 
         const duration = +new Date() - start;
-        self.ctx.fillStyle = 'black';
-        self.ctx.fillText(duration + 'ms', 10, 10);
+        self.gameCtx.fillStyle = 'black';
+        self.gameCtx.fillText(duration + 'ms', 10, 10);
         self.totalTime += duration;
         self.totalFrames += 1;
         if (self.totalFrames % (5 * self.framerate) === 0) {
@@ -177,11 +192,15 @@ class Stick {
   }
 
   processFrame() {
-    const imageData = this.ctx.getImageData(0, 0, this.width, this.height);
+    const smallerData = this.computeCtx.getImageData(
+      0, 0,
+      this.width*this.sampleRate, this.height*this.sampleRate
+    );
+    const imageData = this.gameCtx.getImageData(0, 0, this.width, this.height);
     const haveEnoughFlowPoints = this.flow.point_count === 4;
     let didOflow = false;
     if (this.region && this.region.score > 0.95 && haveEnoughFlowPoints) {
-      this.flow.update(imageData);
+      this.flow.update(smallerData);
       if (this.flow.point_count === 4) {
         this.region.corners = [];
         for (let i = 0; i < this.flow.point_count; i++) {
@@ -195,7 +214,7 @@ class Stick {
     }
 
     if (!didOflow) {
-      const candidateRegion = this.getBestSquare(imageData);
+      const candidateRegion = this.getBestSquare(smallerData);
       const maxStale = 2;
       if (candidateRegion) {
         this.region = candidateRegion;
@@ -216,7 +235,7 @@ class Stick {
     const self = this;
     const data = imageData.data;
     const threshold = 600;
-    const newData = new ImageData(this.width, this.height);
+    const newData = new ImageData(imageData.width, imageData.height);
     for (let i = 0; i < data.length; i += 4) {
       const bright = data[i] + data[i + 1] + data[i + 2];
       if (bright > threshold) {
@@ -230,8 +249,8 @@ class Stick {
     const blobs = StickARUtils.detectBlobs(newData);
     const squareBlobs = Object.keys(blobs).map(key => {
       return StickARUtils.isSquare(
-        self.width,
-        self.height,
+        self.width * self.sampleRate,
+        self.height * self.sampleRate,
         blobs[key], 
         (this.region || {}).corners
       );
@@ -255,11 +274,14 @@ class Stick {
 
     // annotate the image with corner information
     this.region.corners.forEach(c => {
-      self.ctx.fillStyle = 'rgb(255, 0, 0)'
-      self.ctx.beginPath()
-      self.ctx.arc(c[0], c[1], 4, 0, 2 * Math.PI, true)
-      self.ctx.closePath()
-      self.ctx.fill()
+      const x = c[0] / self.sampleRate;
+      const y = c[1] / self.sampleRate;
+      const r = 10;
+      self.gameCtx.fillStyle = 'rgb(255, 0, 0)'
+      self.gameCtx.beginPath()
+      self.gameCtx.arc(x, y, r, 0, 2 * Math.PI, true)
+      self.gameCtx.closePath()
+      self.gameCtx.fill()
     });
   }
 }

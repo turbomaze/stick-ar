@@ -2,7 +2,7 @@
   margin: 0;
   padding: 0;
 }
-video {
+video, canvas#compute {
   position: absolute;
   visibility: hidden;
 }
