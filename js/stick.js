@@ -266,12 +266,10 @@ class Stick {
     for (let x = 0; x < this.sprite.width; x++) {
       for (let y = 0; y < this.sprite.height; y++) {
         const index = 4 * (y * this.sprite.width + x);
-        const bright = 0.34 * this.sprite.data[index] + 0.5 * this.sprite.data[index + 1] + 0.16 * this.sprite.data[index + 2];
-        if (this.sprite.data[index + 2] - this.sprite.data[index] > 10) {
-          this.sprite.data[index + 0] = 255;
-          this.sprite.data[index + 1] = 255;
-          this.sprite.data[index + 2] = 255;
-          this.sprite.data[index + 3] = 0;
+        for (let k = 0; k < 3; k++) {
+          this.sprite.data[index + k] = Math.min(
+            this.sprite.data[index + k] + 13, 255
+          );
         }
       }
     }

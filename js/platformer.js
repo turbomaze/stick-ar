@@ -88,7 +88,12 @@ class Platformer extends GameInterface {
 
     // draw the player
     if (sprite) {
-      this.handler.ctx.putImageData(sprite, 0, 0);
+      const playerSize = sprite.height / (corners[0][1] - corners[1][1]);
+      const p = Game.project([
+        this.state.offset,
+        1 - this.state.height + playerSize
+      ], corners);
+      this.handler.ctx.putImageData(sprite, p[0], p[1]);
     } else {
       const ballRadius = 0.05;
       const ballSize = ballRadius * (corners[3][0] - corners[0][0]);

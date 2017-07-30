@@ -128,7 +128,7 @@ class StickARUtils {
           width, height, oldCorners, indicesSet
         );
       }
-      const minArea = 500;
+      const minArea = 1000;
       if (indices.length > minArea) {
         if (oldCorners && oldScore > 0.8 && oldScore > score) {
           return {
