@@ -21,9 +21,9 @@ class OpticalFlow {
 
     jsfeat.imgproc.grayscale(
       imageData.data,
-			imageData.width,
-			imageData.height,
-			this.curr_img_pyr.data[0]
+      imageData.width,
+      imageData.height,
+      this.curr_img_pyr.data[0]
     );
     this.curr_img_pyr.build(this.curr_img_pyr.data[0], true);
 
@@ -62,9 +62,9 @@ class OpticalFlow {
     this.point_count++;
   }
 
-	clearPoints() {
-		this.point_count = 0;
-	}
+  clearPoints() {
+    this.point_count = 0;
+  }
 }
 
 class Stick {
@@ -168,38 +168,36 @@ class Stick {
 
   processFrame() {
     const imageData = this.ctx.getImageData(0, 0, this.width, this.height);
-		const haveEnoughFlowPoints = this.flow.point_count === 4;
-		let didOflow = false;
+    const haveEnoughFlowPoints = this.flow.point_count === 4;
+    let didOflow = false;
     if (this.region && this.region.score > 0.95 && haveEnoughFlowPoints) {
-			console.log('flow shaka gnarl bro');
       this.flow.update(imageData);
-			if (this.flow.point_count === 4) {
-				this.region.corners = [];
-				for (let i = 0; i < this.flow.point_count; i++) {
-					this.region.corners.push([
-						this.flow.curr_xy[(i << 1)], this.flow.curr_xy[(i << 1) + 1]
-					]);
-				}
-				this.region.corners = StickARUtils.sortCorners(this.region.corners);
-				didOflow = true;
-			}
+      if (this.flow.point_count === 4) {
+        this.region.corners = [];
+        for (let i = 0; i < this.flow.point_count; i++) {
+          this.region.corners.push([
+            this.flow.curr_xy[(i << 1)], this.flow.curr_xy[(i << 1) + 1]
+          ]);
+        }
+        this.region.corners = StickARUtils.sortCorners(this.region.corners);
+        didOflow = true;
+      }
     }
 
-		if (!didOflow) {
-			console.log('recompute fuck');
-			const candidateRegion = this.getBestSquare(imageData);
-			const maxStale = 3;
-			if (candidateRegion) {
-      	this.region = candidateRegion;
-			} else if (this.region && (this.region.stale || 0) < maxStale) {
- 				this.region.stale = (this.region.stale || 0) + 1;
-			} else {
-				this.region = false;
-			}
-			this.flow.clearPoints();
-			if (this.region) {
-				this.region.corners.forEach(this.flow.addPoint.bind(this.flow));
-			}
+    if (!didOflow) {
+      const candidateRegion = this.getBestSquare(imageData);
+      const maxStale = 2;
+      if (candidateRegion) {
+        this.region = candidateRegion;
+      } else if (this.region && (this.region.stale || 0) < maxStale) {
+         this.region.stale = (this.region.stale || 0) + 1;
+      } else {
+        this.region = false;
+      }
+      this.flow.clearPoints();
+      if (this.region) {
+        this.region.corners.forEach(this.flow.addPoint.bind(this.flow));
+      }
     }
     this.renderRegion(imageData);
   }
@@ -221,7 +219,12 @@ class Stick {
     // get all the square blobs
     const blobs = StickARUtils.detectBlobs(newData);
     const squareBlobs = Object.keys(blobs).map(key => {
-      return StickARUtils.isSquare(self.width, self.height, blobs[key]);
+      return StickARUtils.isSquare(
+        self.width,
+        self.height,
+        blobs[key], 
+        (this.region || {}).corners
+      );
     }).filter(a => a);
 
     // find the best square blob
@@ -242,20 +245,20 @@ class Stick {
 
     // annotate the image with corner information
     this.region.corners.forEach(c => {
-      self.ctx.fillStyle = 'rgb(0, 255, 0)'
+      self.ctx.fillStyle = 'rgb(255, 0, 0)'
       self.ctx.beginPath()
-      self.ctx.arc(c[0], c[1], 2, 0, 2 * Math.PI, true)
+      self.ctx.arc(c[0], c[1], 4, 0, 2 * Math.PI, true)
       self.ctx.closePath()
       self.ctx.fill()
     });
 
-    this.region.dumbCorners.forEach(c => {
-      self.ctx.fillStyle = 'rgb(0, 255, 0)'
-      self.ctx.beginPath()
-      self.ctx.arc(c[0], c[1], 2, 0, 2 * Math.PI, true)
-      self.ctx.closePath()
-      self.ctx.fill()
-    });
+    // this.region.contents.forEach(c => {
+    //   self.ctx.fillStyle = 'rgb(0, 255, 0)'
+    //   self.ctx.beginPath()
+    //   self.ctx.arc(c[0], c[1], 2, 0, 2 * Math.PI, true)
+    //   self.ctx.closePath()
+    //   self.ctx.fill()
+    // });
   }
 }
 

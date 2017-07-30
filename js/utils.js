@@ -114,41 +114,62 @@ class StickARUtils {
     return counts;
   }
 
-  static isSquare(width, height, indices) {
+  static isSquare(width, height, indices, oldCorners) {
     const edges = StickARUtils.getEdgePoints(width, height, indices);
     if (edges.length > 0) {
       const corners = StickARUtils.getBestCorners(width, height, edges);
-			const dumbCorners = [];
-			const indicesSet = new Set(indices);
-			const indicesInRegion = new Set([]);
-			const maxX = corners.reduce((a, b) => b[0] > a ? b[0] : a, -1);
-			const maxY = corners.reduce((a, b) => b[1] > a ? b[1] : a, -1);
-			const minX = corners.reduce((a, b) => b[0] < a ? b[0] : a, Infinity);
-			const minY = corners.reduce((a, b) => b[1] < a ? b[1] : a, Infinity);
-			let numGoodInRegion = 0.000001;
-			let numBad = 0;
-			for (let x = minX; x <= maxX; x++) {
-				for (let y = minY; y <= maxY; y++) {
-					const index = y * width + x;
-					if (StickARUtils.isInRegion([x, y], corners)) {
-						if (indicesSet.has(index)) {
-							dumbCorners.push([x, y]);
-							numGoodInRegion++;
-							indicesInRegion.add(index);
-						} else {
-							numBad++;
-						}
-					}
-				}
-			}
-			numBad += indicesSet.size - indicesInRegion.size;
-      let score = (numGoodInRegion - numBad) / numGoodInRegion;
+      const contents = [];
+      const oldContents = [];
+      const indicesSet = new Set(indices);
+      const score = StickARUtils.getSquareScore(
+        width, height, corners, indicesSet, contents
+      );
+      if (oldCorners) {
+        var oldScore = StickARUtils.getSquareScore(
+          width, height, oldCorners, indicesSet, oldContents
+        );
+      }
       const minArea = 100;
-      if (score > 0.8 && indices.length > minArea) {
-        return { corners, dumbCorners, score };
+      if (indices.length > minArea) {
+        if (oldCorners && oldScore > 0.8 && oldScore > score) {
+          return {
+            corners: oldCorners, contents: oldContents, score: oldScore
+          };
+        } else if (score > 0.8) {
+          return { corners, contents, score };
+        }
       }
     }
-		return false;
+    return false;
+  }
+
+  static getSquareScore(width, height, corners, indicesSet, contents) {
+    if (!contents) {
+      var contents = [];
+    }
+    const indicesInRegion = new Set([]);
+    const maxX = corners.reduce((a, b) => b[0] > a ? b[0] : a, -1);
+    const maxY = corners.reduce((a, b) => b[1] > a ? b[1] : a, -1);
+    const minX = corners.reduce((a, b) => b[0] < a ? b[0] : a, Infinity);
+    const minY = corners.reduce((a, b) => b[1] < a ? b[1] : a, Infinity);
+    let numGoodInRegion = 0.000001;
+    let numBad = 0;
+    for (let x = minX; x <= maxX; x++) {
+      for (let y = minY; y <= maxY; y++) {
+        const index = y * width + x;
+        if (StickARUtils.isInRegion([x, y], corners)) {
+          if (indicesSet.has(index)) {
+            contents.push([x, y]);
+            numGoodInRegion++;
+            indicesInRegion.add(index);
+          } else {
+            numBad++;
+          }
+        }
+      }
+    }
+    numBad += indicesSet.size - indicesInRegion.size;
+    return (numGoodInRegion - numBad) / numGoodInRegion;
   }
 
   static getEdgePoints(width, height, indices) {
@@ -202,10 +223,10 @@ class StickARUtils {
     return StickARUtils.sortCorners(bestPoints);
   }
 
-	// corners sorted counter clockwise top left to top right
-	static isInRegion(point, corners) {
-		// from https://github.com/substack/point-in-polygon/blob/master/index.js
-		var x = point[0], y = point[1];
+  // corners sorted counter clockwise top left to top right
+  static isInRegion(point, corners) {
+    // from https://github.com/substack/point-in-polygon/blob/master/index.js
+    var x = point[0], y = point[1];
     var inside = false;
     for (var i = 0, j = corners.length - 1; i < corners.length; j = i++) {
       var xi = corners[i][0], yi = corners[i][1];
@@ -216,36 +237,36 @@ class StickARUtils {
       if (intersect) inside = !inside;
     }
     return inside;
-	}
+  }
 
-	static isAboveLine(point, line) {
-		if (line[0][0] === line[1][0]) return point[0] > line[0][0];
+  static isAboveLine(point, line) {
+    if (line[0][0] === line[1][0]) return point[0] > line[0][0];
 
-		const m = (line[1][1] - line[0][1]) / (line[1][0] - line[0][0]);
-		const b = line[0][1] - line[0][0] * m;
-		return point[1] > (m * point[0] + b);
-	}
+    const m = (line[1][1] - line[0][1]) / (line[1][0] - line[0][0]);
+    const b = line[0][1] - line[0][0] * m;
+    return point[1] > (m * point[0] + b);
+  }
 
   static randomPoint(width, height, indices) {
     const index = indices[Math.floor(indices.length * Math.random())];
     return [index % width, Math.floor(index/width)];
   }
 
-	// requires 4 corners
-	static sortCorners(corners) {
-		const byX = corners.sort((a, b) => a[0] < b[0] ? -1 : 1);
-		if (byX[0][1] > byX[1][1]) {
-			const tmp = [byX[0][0], byX[0][1]]
-			corners[0] = byX[1];
-			corners[1] = tmp;
-		}
-		if (byX[2][1] < byX[3][1]) {
-			const tmp = [byX[2][0], byX[2][1]]
-			corners[2] = byX[3];
-			corners[3] = tmp;
-		}
-		return corners;
-	}
+  // requires 4 corners
+  static sortCorners(corners) {
+    const byX = corners.sort((a, b) => a[0] < b[0] ? -1 : 1);
+    if (byX[0][1] > byX[1][1]) {
+      const tmp = [byX[0][0], byX[0][1]]
+      corners[0] = byX[1];
+      corners[1] = tmp;
+    }
+    if (byX[2][1] < byX[3][1]) {
+      const tmp = [byX[2][0], byX[2][1]]
+      corners[2] = byX[3];
+      corners[3] = tmp;
+    }
+    return corners;
+  }
 
   static getArea(a, b, c, d) {
     return Math.abs(0.5 * (
