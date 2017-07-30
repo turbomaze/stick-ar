@@ -42,10 +42,12 @@ class Game {
     }
     this.canvas.addEventListener('mousedown', handleUserControlledPaddle);
     this.canvas.addEventListener('touchstart', (e) => {
-      handleUserControlEnd(e.changedTouches[0]);
+      console.log(e.changedTouches[0]);
+      handleUserControlledPaddle(e.changedTouches[0]);
     });
     this.canvas.addEventListener('mouseup', handleUserControlEnd);
     this.canvas.addEventListener('touchend', (e) => {
+      console.log(e.changedTouches[0]);
       handleUserControlEnd(e.changedTouches[0]);
     });
   }
