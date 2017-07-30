@@ -7,31 +7,33 @@ class Stick {
       document.querySelector('video'),
       document.querySelector('canvas')
     );
-		stick.start();
+    stick.start();
 
     StickARUtils.registerVideoHandlers(
-			stick.width,
-			stick.height,
-			stream => {
+      stick.width,
+      stick.height,
+      stream => {
         stick.video.srcObject = stream;
         stick.video.onloadedmetadata = e => {
           stick.video.play();
         };
       }, err => {
-		  	alert('Something went wrong. (error code ' + err.code + ')');
-		  }
-		);
+        alert('Something went wrong. (error code ' + err.code + ')');
+      }
+    );
 
     // start the process when they start full screen/landscape
     document.body.addEventListener('click', function() {
       if (!stick.isFullScreen) {
-        StickARUtils.forceFullScreen();
+        if (document.location.hash !== '#desktop') {
+          StickARUtils.forceFullScreen();
+        }
         stick.isFullScreen = true; 
       }
     });
-		if (document.location.hash !== '#desktop') {
-    	screen.orientation.lock('landscape');
-		}
+    if (document.location.hash !== '#desktop') {
+      screen.orientation.lock('landscape');
+    }
   }
 
   constructor(width, height, framerate, video, canvas) {
@@ -42,12 +44,34 @@ class Stick {
     this.isStreaming = false;
     this.width = width;
     this.height = height;
-		this.framerate = framerate;
-		this.brightPx = [];
-	}
+    this.framerate = framerate;
+    this.brightPx = [];
 
-	start() {
-		const self = this;
+    function getMousePos(canvas, evt) {
+      var rect = canvas.getBoundingClientRect();
+      return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+      };
+    }
+
+    const self = this;
+    this.canvas.addEventListener('mousemove', function(evt) {
+      var mousePos = getMousePos(canvas, evt);
+      const imageData = self.ctx.getImageData(0, 0, self.width, self.height);
+      const index = self.width * mousePos.y + mousePos.x;
+      const color = [
+        imageData.data[index + 0],
+        imageData.data[index + 1],
+        imageData.data[index + 2],
+        imageData.data[index + 3]
+      ];
+      console.log(color);
+    }, false);
+  }
+
+  start() {
+    const self = this;
 
     // initialize the canvas for drawing
     this.video.addEventListener('canplay', function(e) {
@@ -60,10 +84,10 @@ class Stick {
         self.canvas.setAttribute('width', self.width);
         self.canvas.setAttribute('height', self.height);
         // Reverse the canvas image
-				if (document.location.hash === '#desktop') {
-        	self.ctx.translate(self.width, 0);
-        	self.ctx.scale(-1, 1);
-				}
+        if (document.location.hash === '#desktop') {
+          self.ctx.translate(self.width, 0);
+          self.ctx.scale(-1, 1);
+        }
         self.isStreaming = true;
       }
     }, false);
@@ -89,20 +113,30 @@ class Stick {
   processFrame() {
     const imageData = this.ctx.getImageData(0, 0, this.width, this.height);
     const data = imageData.data;
+    const threshold = 200;
     if (Math.random() < 0.5) {
       this.brightPx = [];
+      const newData = new ImageData(this.width, this.height);
       for (let i = 0; i < data.length; i += 4) {
         const bright = 0.34 * data[i] + 0.5 * data[i + 1] + 0.16 * data[i + 2];
-        if (bright > 220) { 
-          this.brightPx.push(i);
+        if (bright > threshold) { 
+          newData.data[i + 0] = 255;
+        } else {
+          newData.data[i + 0] = 0;
         }
       }
+
+      const blobs = StickARUtils.detectBlobs(newData);
+      const self = this;
+      self.brightPx = Object.keys(blobs).map(key => {
+        return StickARUtils.isSquare(self.width, self.height, blobs[key]);
+      }).find(a => a);
     }
-    for (let i = 0; i < this.brightPx.length; i++) {
-      data[this.brightPx[i]] = 0;
-      data[this.brightPx[i] + 1] = 0;
-      data[this.brightPx[i] + 2] = 0;
-    }
+    this.brightPx.forEach(i => {
+      data[4 * i] = 255;
+      data[4 * i + 1] = 0;
+      data[4 * i + 2] = 0;
+    });
     this.ctx.putImageData(imageData, 0, 0);
   }
 }
