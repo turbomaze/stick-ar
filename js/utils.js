@@ -118,35 +118,30 @@ class StickARUtils {
     const edges = StickARUtils.getEdgePoints(width, height, indices);
     if (edges.length > 0) {
       const corners = StickARUtils.getBestCorners(width, height, edges);
-      const contents = [];
-      const oldContents = [];
       const indicesSet = new Set(indices);
       const score = StickARUtils.getSquareScore(
-        width, height, corners, indicesSet, contents
+        width, height, corners, indicesSet
       );
       if (oldCorners) {
         var oldScore = StickARUtils.getSquareScore(
-          width, height, oldCorners, indicesSet, oldContents
+          width, height, oldCorners, indicesSet
         );
       }
       const minArea = 100;
       if (indices.length > minArea) {
         if (oldCorners && oldScore > 0.8 && oldScore > score) {
           return {
-            corners: oldCorners, contents: oldContents, score: oldScore
+            corners: oldCorners, score: oldScore
           };
         } else if (score > 0.8) {
-          return { corners, contents, score };
+          return { corners, score };
         }
       }
     }
     return false;
   }
 
-  static getSquareScore(width, height, corners, indicesSet, contents) {
-    if (!contents) {
-      var contents = [];
-    }
+  static getSquareScore(width, height, corners, indicesSet) {
     const indicesInRegion = new Set([]);
     const maxX = corners.reduce((a, b) => b[0] > a ? b[0] : a, -1);
     const maxY = corners.reduce((a, b) => b[1] > a ? b[1] : a, -1);
@@ -159,7 +154,6 @@ class StickARUtils {
         const index = y * width + x;
         if (StickARUtils.isInRegion([x, y], corners)) {
           if (indicesSet.has(index)) {
-            contents.push([x, y]);
             numGoodInRegion++;
             indicesInRegion.add(index);
           } else {
@@ -183,13 +177,11 @@ class StickARUtils {
     return indices.length > 100 ? indices.filter(i => {
       const pos = [i % width, Math.floor(i/width)];
       let neighbors = 0;
-      for (let y = -1; y <= 1; y++) {
-        for (let x = -1; x <= 1; x++) {
-          if (x === 0 && y === 0) continue;
-          if ((set[pos[0] + x] || {})[pos[1] + y]) neighbors++;
-        }
-      }
-      return neighbors < 6;
+      if ((set[pos[0] - 1] || {})[pos[1] + 0]) neighbors++;
+      if ((set[pos[0] + 1] || {})[pos[1] + 0]) neighbors++;
+      if ((set[pos[0]] || {})[pos[1] - 1]) neighbors++;
+      if ((set[pos[0]] || {})[pos[1] + 1]) neighbors++;
+      return neighbors <= 2;
     }) : [];
   }
 

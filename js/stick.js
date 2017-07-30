@@ -251,14 +251,6 @@ class Stick {
       self.ctx.closePath()
       self.ctx.fill()
     });
-
-    // this.region.contents.forEach(c => {
-    //   self.ctx.fillStyle = 'rgb(0, 255, 0)'
-    //   self.ctx.beginPath()
-    //   self.ctx.arc(c[0], c[1], 2, 0, 2 * Math.PI, true)
-    //   self.ctx.closePath()
-    //   self.ctx.fill()
-    // });
   }
 }
 
