@@ -30,6 +30,9 @@ class Stick {
           StickARUtils.forceFullScreen();
         }
         stick.isFullScreen = true;
+      } else if (!stick.loadedSprite) {
+        // load the sprite
+        stick.loadSprite();
         stick.gameHandler.start();
       }
     });
@@ -47,12 +50,14 @@ class Stick {
     this.gameCtx = this.gameCanvas.getContext('2d');
     this.isFullScreen = false;
     this.isStreaming = false;
+    this.loadedSprite = false;
     this.width = width;
     this.height = height;
     this.framerate = framerate;
     this.region = false;
     this.totalTime = 0;
     this.totalFrames = 0;
+    this.sprite = null;
     this.gameHandler = new Game(
       this.width, this.height,
       this.gameCanvas, this.gameCtx,
@@ -166,6 +171,60 @@ class Stick {
     });
 
     return bestSquare;
+  }
+
+  loadSprite() {
+    if (!this.region) return;
+
+    const self = this;
+
+    // get bounding rectangle of the quadrilateral
+    const corners = this.region.corners;
+    const maxX = corners.reduce((a, b) => b[0] > a ? b[0] : a, -1);
+    const maxY = corners.reduce((a, b) => b[1] > a ? b[1] : a, -1);
+    const minX = corners.reduce((a, b) => b[0] < a ? b[0] : a, Infinity);
+    const minY = corners.reduce((a, b) => b[1] < a ? b[1] : a, Infinity);
+
+    // threshold all pixels in the region, omitting those not in region
+    const gameData = this.gameCtx.getImageData(
+      minX, minY, maxX - minX, maxY - minY
+    );
+    const data = gameData.data;
+    const spriteMaxX = 0;
+    const spriteMinX = Infinity;
+    const spriteMaxY = 0;
+    const spriteMinY = Infinity;
+    for (let x = 0; x < gameData.width; x++) {
+      for (let y = 0; y < gameData.height; y++) {
+        const index = 4 * (y * width + x);
+        if (StickARUtils.isInRegion([x, y], corners)) {
+          const bright = data[index] + data[index + 1] + data[index + 2];
+          if (bright > 530) {
+            sprite[index + 0] = 255;
+            sprite[index + 1] = 255;
+            sprite[index + 2] = 255;
+            sprite[index + 3] = 0;
+          } else {
+            if (x > spriteMaxX) spriteMaxX = x;
+            if (x < spriteMinX) spriteMinX = x;
+            if (y > spriteMaxY) spriteMaxY = y;
+            if (y < spriteMinY) spriteMinY = y;
+          }
+        } else {
+          sprite[index + 0] = 255;
+          sprite[index + 1] = 255;
+          sprite[index + 2] = 255;
+          sprite[index + 3] = 0;
+        }
+      }
+    }
+
+    // save this as a sprite to draw later
+    this.sprite = this.gameCtx.getImageData(
+      minX + spriteMinX, minY + spriteMinY,
+      spriteMaxX - spriteMinX, spriteMaxY - spriteMinY
+    );
+    this.loadedSprite = true;
   }
 
   renderGame() {
