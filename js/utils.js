@@ -147,10 +147,11 @@ class StickARUtils {
     const maxY = corners.reduce((a, b) => b[1] > a ? b[1] : a, -1);
     const minX = corners.reduce((a, b) => b[0] < a ? b[0] : a, Infinity);
     const minY = corners.reduce((a, b) => b[1] < a ? b[1] : a, Infinity);
+    const sampleEvery = 2;
     let numGoodInRegion = 0.000001;
     let numBad = 0;
-    for (let x = minX; x <= maxX; x++) {
-      for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x += sampleEvery) {
+      for (let y = minY; y <= maxY; y += sampleEvery) {
         const index = y * width + x;
         if (StickARUtils.isInRegion([x, y], corners)) {
           if (indicesSet.has(index)) {
@@ -162,7 +163,10 @@ class StickARUtils {
         }
       }
     }
-    numBad += indicesSet.size - indicesInRegion.size;
+
+    // square because two dimensions
+    const adjustedIndicesSize = indicesSet.size / Math.pow(sampleEvery, 2);
+    numBad += adjustedIndicesSize - indicesInRegion.size;
     return (numGoodInRegion - numBad) / numGoodInRegion;
   }
 

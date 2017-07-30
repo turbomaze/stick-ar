@@ -205,14 +205,14 @@ class Stick {
   getBestSquare(imageData) {
     const self = this;
     const data = imageData.data;
-    const threshold = 0.34 * 210 + 0.5 * 210 + 0.16 * 210;
+		const threshold = 600;
     const newData = new ImageData(this.width, this.height);
     for (let i = 0; i < data.length; i += 4) {
-      const bright = 0.34 * data[i] + 0.5 * data[i + 1] + 0.16 * data[i + 2];
+			const bright = data[i] + data[i + 1] + data[i + 2];
       if (bright > threshold) {
-        newData.data[i + 0] = 255;
+        newData.data[i] = 255;
       } else {
-        newData.data[i + 0] = 0;
+        newData.data[i] = 0;
       }
     }
 
