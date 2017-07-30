@@ -45,6 +45,7 @@ class StickARUtils {
     }
   }
 
+  // from https://github.com/turbomaze/reedr/blob/master/js/reedr.js
   // blobs on 0th channel !== 0
   static detectBlobs(imageData) {
     var labels = [];

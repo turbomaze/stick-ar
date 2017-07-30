@@ -2,8 +2,16 @@ class OpticalFlow {
   constructor(options) {
     this.curr_img_pyr = new jsfeat.pyramid_t(3);
     this.prev_img_pyr = new jsfeat.pyramid_t(3);
-    this.curr_img_pyr.allocate(640, 480, jsfeat.U8_t|jsfeat.C1_t);
-    this.prev_img_pyr.allocate(640, 480, jsfeat.U8_t|jsfeat.C1_t);
+    this.curr_img_pyr.allocate(
+      options.width,
+      options.height,
+      jsfeat.U8_t|jsfeat.C1_t
+    );
+    this.prev_img_pyr.allocate(
+      options.width,
+      options.height,
+      jsfeat.U8_t|jsfeat.C1_t
+    );
     this.point_count = 0;
     this.point_status = new Uint8Array(100);
     this.prev_xy = new Float32Array(100*2);
@@ -70,8 +78,8 @@ class OpticalFlow {
 class Stick {
   static init() {
     const stick = new Stick(
-      600,
-      420,
+      300,
+      210,
       15,
       document.querySelector('video'),
       document.querySelector('canvas')
@@ -118,6 +126,8 @@ class Stick {
     this.totalTime = 0;
     this.totalFrames = 0;
     this.flow = new OpticalFlow({
+      width: this.width,
+      height: this.height,
       win_size: 30,
       max_iterations: 20,
       epsilon: 0.05,
@@ -205,10 +215,10 @@ class Stick {
   getBestSquare(imageData) {
     const self = this;
     const data = imageData.data;
-		const threshold = 600;
+    const threshold = 600;
     const newData = new ImageData(this.width, this.height);
     for (let i = 0; i < data.length; i += 4) {
-			const bright = data[i] + data[i + 1] + data[i + 2];
+      const bright = data[i] + data[i + 1] + data[i + 2];
       if (bright > threshold) {
         newData.data[i] = 255;
       } else {
