@@ -3,7 +3,7 @@ class Stick {
     const stick = new Stick(
       600,
       420,
-      25,
+      15,
       document.querySelector('video'),
       document.querySelector('canvas')
     );
@@ -45,15 +45,9 @@ class Stick {
     this.width = width;
     this.height = height;
     this.framerate = framerate;
-    this.brightPx = [];
-
-    function getMousePos(canvas, evt) {
-      var rect = canvas.getBoundingClientRect();
-      return {
-        x: evt.clientX - rect.left,
-        y: evt.clientY - rect.top
-      };
-    }
+    this.region = false;
+    this.totalTime = 0;
+    this.totalFrames = 0;
   }
 
   start() {
@@ -69,11 +63,6 @@ class Stick {
         }
         self.canvas.setAttribute('width', self.width);
         self.canvas.setAttribute('height', self.height);
-        // Reverse the canvas image
-        if (document.location.hash === '#desktop') {
-          self.ctx.translate(self.width, 0);
-          self.ctx.scale(-1, 1);
-        }
         self.isStreaming = true;
       }
     }, false);
@@ -91,23 +80,29 @@ class Stick {
         self.processFrame();
 
         const duration = +new Date() - start;
-        self.ctx.fillText(duration + 'ms', 50, 50);
+        self.ctx.fillStyle = 'black';
+        self.ctx.fillText(duration + 'ms', 10, 10);
+        self.totalTime += duration;
+        self.totalFrames += 1;
+        if (self.totalFrames % self.framerate === 0) {
+          console.log('Avg ' + (self.totalTime/self.totalFrames) + 'ms/frame');
+        }
       }, 1000 / self.framerate);
     }, false);
   }
 
   processFrame() {
+    const self = this;
     const imageData = this.ctx.getImageData(0, 0, this.width, this.height);
     const data = imageData.data;
-    const threshold = 128;
-    const k = Math.pow(2, 6);
-    if (Math.random() < 1.5) {
-      this.brightPx = [];
+    const threshold = 0.34 * 210 + 0.5 * 210 + 0.16 * 210;
+    if (Math.random() < 0.5) {
+      this.region = false;
       const newData = new ImageData(this.width, this.height);
       for (let i = 0; i < data.length; i += 4) {
-        const a = k * Math.floor(data[i + 0] / k);
-        const b = k * Math.floor(data[i + 1] / k);
-        const c = k * Math.floor(data[i + 2] / k);
+        const a = data[i + 0];
+        const b = data[i + 1];
+        const c = data[i + 2];
         const bright = 0.34 * a + 0.5 * b + 0.16 * c;
         if (bright > threshold) { 
           newData.data[i + 0] = 255;
@@ -116,18 +111,52 @@ class Stick {
         }
       }
 
+      // get all the square blobs
       const blobs = StickARUtils.detectBlobs(newData);
-      const self = this;
-      self.brightPx = Object.keys(blobs).map(key => {
+      const squareBlobs = Object.keys(blobs).map(key => {
         return StickARUtils.isSquare(self.width, self.height, blobs[key]);
-      }).find(a => a) || [];
+      }).filter(a => a);
+
+      // find the best square blob
+      let bestSquare = false;
+      squareBlobs.forEach(b => {
+        if (!bestSquare || bestSquare.indices.length < b.indices.length) {
+          bestSquare = b;
+        }
+      });
+
+      if (bestSquare) {
+        this.region = bestSquare;
+      }
     }
-    this.brightPx.forEach(i => {
-      data[4 * i] = 255;
-      data[4 * i + 1] = 0;
-      data[4 * i + 2] = 0;
-    });
-    this.ctx.putImageData(imageData, 0, 0);
+
+    if (this.region) {
+      // draw the special pixels
+      this.region.indices.forEach(i => {
+        data[4 * i] = 255;
+        data[4 * i + 1] = 0;
+        data[4 * i + 2] = 0;
+      });
+      this.ctx.putImageData(imageData, 0, 0);
+
+      // annotate the image with corner and edge information
+      this.region.corners.forEach(c => {
+        self.ctx.fillStyle = 'rgb(0, 255, 0)'
+        self.ctx.beginPath()
+        self.ctx.arc(c[0], c[1], 4, 0, 2 * Math.PI, true)
+        self.ctx.closePath()
+        self.ctx.fill()
+      });
+      this.region.edges.forEach(i => {
+        const x = i % self.width;
+        const y = Math.floor(i / self.width);
+        self.ctx.fillStyle = 'rgb(0, 255, 255)'
+        self.ctx.beginPath()
+        self.ctx.arc(x, y, 2, 0, 2 * Math.PI, true)
+        self.ctx.closePath()
+        self.ctx.fill()
+      });
+    }
   }
 }
 

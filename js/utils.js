@@ -116,7 +116,17 @@ class StickARUtils {
 
   static isSquare(width, height, indices) {
     const edges = StickARUtils.getEdgePoints(width, height, indices);
-    return edges;
+    if (edges.length > 0) {
+      const corners = StickARUtils.getBestCorners(width, height, edges); 
+      const area = StickARUtils.getArea.apply(null, corners);
+      const ratio = area / indices.length;
+      const minArea = 100;
+      if (ratio > 0.8 && indices.length > minArea) {
+        return { corners, edges, indices };
+      } else {
+        return false;
+      }
+    }
   }
 
   static getEdgePoints(width, height, indices) {
@@ -127,7 +137,7 @@ class StickARUtils {
       set[pair[0]] = set[pair[0]] || {};
       set[pair[0]][pair[1]] = true;
     });
-    return indices.length > 100 && indices.filter(i => {
+    return indices.length > 100 ? indices.filter(i => {
       const pos = [i % width, Math.floor(i/width)];
       let neighbors = 0;
       for (let y = -1; y <= 1; y++) {
@@ -137,6 +147,54 @@ class StickARUtils {
         }
       }
       return neighbors < 6;
+    }) : [];
+  }
+
+  static getBestCorners(width, height, indices) {
+    // init random 4 points
+    const bestPoints = [0, 1, 2, 3].map(() => {
+      return StickARUtils.randomPoint(width, height, indices);
     });
+    let bestArea = StickARUtils.getArea.apply(null, bestPoints);
+
+    const numRounds = 1000;
+    for (let i = 0; i < numRounds; i++) {
+      // pick new points
+      const candidateA = StickARUtils.randomPoint(width, height, indices);
+      const candidateB = StickARUtils.randomPoint(width, height, indices);
+
+      // points to keep
+      const keeperA = i % 4;
+      const keeperB = (i + 1) % 4;
+
+      // compare
+      const candidateArea = StickARUtils.getArea(
+        candidateA, candidateB, bestPoints[keeperA], bestPoints[keeperB]
+      );
+      if (candidateArea > bestArea) {
+        bestArea = candidateArea;
+        bestPoints[(keeperA + 2) % 4] = candidateA;
+        bestPoints[(keeperB + 2) % 4] = candidateB;
+      }
+    }
+    return bestPoints;
+  }
+
+  static randomPoint(width, height, indices) {
+    const index = indices[Math.floor(indices.length * Math.random())];
+    return [index % width, Math.floor(index/width)];
+  }
+
+  static getArea(a, b, c, d) {
+    return Math.abs(0.5 * (
+      a[0] * b[1] +
+      b[0] * c[1] +
+      c[0] * d[1] +
+      d[0] * a[1] -
+      b[0] * a[1] -
+      c[0] * b[1] -
+      d[0] * c[1] -
+      a[0] * d[1]
+    ));
   }
 }
