@@ -7,6 +7,7 @@ class Game {
     this.state = {
       x: 0.5,
       y: 0.5,
+      radius: 0.05,
       speed: 0.05,
       angle: Math.random(2 * Math.PI),
     };
@@ -18,28 +19,33 @@ class Game {
 
   render(corners) {
     const self = this;
-    corners.forEach(c => {
-      self.drawPoint(c[0], c[1], 10, 'rgb(255, 0, 0)');
-    });
     this.advanceState();
 
-    const x0 = this.project(this.state.x, corners[0], corners[3]);
-    const x1 = this.project(this.state.x, corners[1], corners[2]);
-    const y0 = this.project(this.state.y, corners[0], corners[1]);
-    const y1 = this.project(this.state.y, corners[3], corners[2]);
-    const p = this.intersect([x0, x1], [y0, y1]);
-    this.drawPoint(p[0], p[1], 15, 'rgb(60, 50, 55)');
+    // draw the corner markers
+    const cornerSize = 0.02 * (corners[3][0] - corners[0][0]);
+    corners.forEach(c => {
+      self.drawPoint(c[0], c[1], cornerSize, 'rgb(255, 0, 0)');
+    });
+
+    // draw the ball
+    const ballSize = this.state.radius * (corners[3][0] - corners[0][0]);
+    const p = this.project([this.state.x, this.state.y], corners);
+    this.drawPoint(p[0], p[1], ballSize, 'rgb(90, 80, 88)');
   }
 
   advanceState() {
+    const radius = this.state.radius;
     const newX = this.state.x + this.state.speed * Math.cos(this.state.angle);
     const newY = this.state.y + this.state.speed * Math.sin(this.state.angle);
-    if (newX >= 0 && newX < 1 && newY >= 0 && newY < 1) {
+    if (
+      newX >= radius && newX < 1 - radius &&
+      newY >= radius && newY < 1 - radius
+    ) {
       this.updateState({
         x: newX,
         y: newY
       });
-    } else if (newX < 0 || newX >= 1) {
+    } else if (newX < radius || newX >= 1 - radius) {
       this.updateState({
         angle: (3 * Math.PI - this.state.angle) % (2 * Math.PI)
       });
@@ -50,7 +56,15 @@ class Game {
     }
   }
 
-  project(value, p, q) {
+  project(point, corners) {
+    const x0 = this.projectOnLine(point[0], corners[0], corners[3]);
+    const x1 = this.projectOnLine(point[0], corners[1], corners[2]);
+    const y0 = this.projectOnLine(point[1], corners[0], corners[1]);
+    const y1 = this.projectOnLine(point[1], corners[3], corners[2]);
+    return this.intersect([x0, x1], [y0, y1]);
+  }
+
+  projectOnLine(value, p, q) {
     return [
       value * q[0] + (1 - value) * p[0],
       value * q[1] + (1 - value) * p[1],
