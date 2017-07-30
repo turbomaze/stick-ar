@@ -138,6 +138,10 @@ class Stick {
       epsilon: 0.05,
       min_eigen: 0.005
     });
+    this.game = new Game(
+      this.width, this.height,
+      this.gameCanvas, this.gameCtx
+    );
   }
 
   start() {
@@ -180,8 +184,10 @@ class Stick {
         self.processFrame();
 
         const duration = +new Date() - start;
+        const fontSize = 32;
+        self.gameCtx.font = fontSize + 'px Arial';
         self.gameCtx.fillStyle = 'black';
-        self.gameCtx.fillText(duration + 'ms', 10, 10);
+        self.gameCtx.fillText(duration + 'ms', 10, fontSize);
         self.totalTime += duration;
         self.totalFrames += 1;
         if (self.totalFrames % (5 * self.framerate) === 0) {
@@ -192,15 +198,14 @@ class Stick {
   }
 
   processFrame() {
-    const smallerData = this.computeCtx.getImageData(
+    const computeData = this.computeCtx.getImageData(
       0, 0,
       this.width*this.sampleRate, this.height*this.sampleRate
     );
-    const imageData = this.gameCtx.getImageData(0, 0, this.width, this.height);
     const haveEnoughFlowPoints = this.flow.point_count === 4;
     let didOflow = false;
     if (this.region && this.region.score > 0.95 && haveEnoughFlowPoints) {
-      this.flow.update(smallerData);
+      this.flow.update(computeData);
       if (this.flow.point_count === 4) {
         this.region.corners = [];
         for (let i = 0; i < this.flow.point_count; i++) {
@@ -214,7 +219,7 @@ class Stick {
     }
 
     if (!didOflow) {
-      const candidateRegion = this.getBestSquare(smallerData);
+      const candidateRegion = this.getBestSquare(computeData);
       const maxStale = 2;
       if (candidateRegion) {
         this.region = candidateRegion;
@@ -228,7 +233,7 @@ class Stick {
         this.region.corners.forEach(this.flow.addPoint.bind(this.flow));
       }
     }
-    this.renderRegion(imageData);
+    this.renderGame();
   }
 
   getBestSquare(imageData) {
@@ -267,22 +272,16 @@ class Stick {
     return bestSquare;
   }
 
-  renderRegion(imageData) {
+  renderGame() {
     if (!this.region) return;
 
     const self = this;
 
-    // annotate the image with corner information
-    this.region.corners.forEach(c => {
+    this.game.render(this.region.corners.map(c => {
       const x = c[0] / self.sampleRate;
       const y = c[1] / self.sampleRate;
-      const r = 10;
-      self.gameCtx.fillStyle = 'rgb(255, 0, 0)'
-      self.gameCtx.beginPath()
-      self.gameCtx.arc(x, y, r, 0, 2 * Math.PI, true)
-      self.gameCtx.closePath()
-      self.gameCtx.fill()
-    });
+      return [x, y];
+    }));
   }
 }
 
