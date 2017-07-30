@@ -221,11 +221,13 @@ class Stick {
     for (let x = 0; x < computeData.width; x++) {
       for (let y = 0; y < computeData.height; y++) {
         const index = 4 * (y * computeData.width + x);
-        if (StickARUtils.isInRegion([x, y], StickARUtils.sortCorners(smallCorners))) {
-	  const dist = Math.sqrt(
-		Math.pow(data[index] - 96, 2) +
-		Math.pow(data[index + 1] - 130, 2) +
-		Math.pow(data[index + 2] - 180, 2)
+        if (StickARUtils.isInRegion(
+          [x, y], StickARUtils.sortCorners(smallCorners)
+        )) {
+          const dist = Math.sqrt(
+            Math.pow(data[index] - 96, 2) +
+            Math.pow(data[index + 1] - 130, 2) +
+            Math.pow(data[index + 2] - 180, 2)
           );
           if (dist < 50) {
             if (x > spriteMaxX) spriteMaxX = x;
@@ -261,21 +263,25 @@ class Stick {
     const spriteInfo = this.findSprite();
 
     // save this as a sprite to draw later
-    this.sprite = this.gameCtx.getImageData(
-      spriteInfo.topLeftX,
-      spriteInfo.topLeftY,
-      spriteInfo.width,
-      spriteInfo.height
-    );
-    for (let x = 0; x < this.sprite.width; x++) {
-      for (let y = 0; y < this.sprite.height; y++) {
-        const index = 4 * (y * this.sprite.width + x);
-        for (let k = 0; k < 3; k++) {
-          this.sprite.data[index + k] = Math.min(
-            this.sprite.data[index + k] + 13, 255
-          );
+    if (spriteInfo.topLeftX !== Infinity) {
+      this.sprite = this.gameCtx.getImageData(
+        spriteInfo.topLeftX,
+        spriteInfo.topLeftY,
+        spriteInfo.width,
+        spriteInfo.height
+      );
+      for (let x = 0; x < this.sprite.width; x++) {
+        for (let y = 0; y < this.sprite.height; y++) {
+          const index = 4 * (y * this.sprite.width + x);
+          for (let k = 0; k < 3; k++) {
+            this.sprite.data[index + k] = Math.min(
+              this.sprite.data[index + k] + 13, 255
+            );
+          }
         }
       }
+    } else {
+      this.sprite = false;
     }
     this.loadedSprite = true;
   }
