@@ -79,7 +79,7 @@ class Pong extends GameInterface {
     });
   }
 
-  render(corners) {
+  render(corners, sprite) {
     const self = this;
 
     // draw the corner markers

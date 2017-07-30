@@ -133,6 +133,16 @@ class Stick {
     } else {
       this.region = false;
     }
+
+    const spriteInfo = this.findSprite();
+    if (spriteInfo) {
+      this.gameCtx.lineWidth = 4;
+      this.gameCtx.strokeStyle = 'green';
+      this.gameCtx.strokeRect(
+        spriteInfo.topLeftX, spriteInfo.topLeftY,
+        spriteInfo.width, spriteInfo.height
+      );
+    }
     
     this.renderGame();
   }
@@ -173,8 +183,21 @@ class Stick {
     return bestSquare;
   }
 
-  loadSprite() {
+  findSprite() {
     if (!this.region) return;
+
+    function getSmallerCorners(corners) {
+      const total = corners.reduce((a, b) => {
+        return [a[0] + b[0], a[1] + b[1]];
+      }, [0, 0]);
+      const average = [total[0]/4, total[1]/4];
+      return corners.map(c => {
+        return [
+          0.9 * c[0] + 0.1 * (average[0] - c[0]),
+          0.9 * c[1] + 0.1 * (average[1] - c[1])
+        ];
+      });
+    }
 
     const self = this;
 
@@ -186,44 +209,72 @@ class Stick {
     const minY = corners.reduce((a, b) => b[1] < a ? b[1] : a, Infinity);
 
     // threshold all pixels in the region, omitting those not in region
-    const gameData = this.gameCtx.getImageData(
+    const computeData = this.computeCtx.getImageData(
       minX, minY, maxX - minX, maxY - minY
     );
-    const data = gameData.data;
-    const spriteMaxX = 0;
-    const spriteMinX = Infinity;
-    const spriteMaxY = 0;
-    const spriteMinY = Infinity;
-    for (let x = 0; x < gameData.width; x++) {
-      for (let y = 0; y < gameData.height; y++) {
-        const index = 4 * (y * width + x);
-        if (StickARUtils.isInRegion([x, y], corners)) {
-          const bright = data[index] + data[index + 1] + data[index + 2];
-          if (bright > 530) {
-            sprite[index + 0] = 255;
-            sprite[index + 1] = 255;
-            sprite[index + 2] = 255;
-            sprite[index + 3] = 0;
-          } else {
+    const data = computeData.data;
+    const smallCorners = getSmallerCorners(corners);
+    let spriteMaxX = -1;
+    let spriteMinX = Infinity;
+    let spriteMaxY = -1;
+    let spriteMinY = Infinity;
+    for (let x = 0; x < computeData.width; x++) {
+      for (let y = 0; y < computeData.height; y++) {
+        const index = 4 * (y * computeData.width + x);
+        if (StickARUtils.isInRegion([x, y], StickARUtils.sortCorners(smallCorners))) {
+          const bright = 0.34 * data[index] + 0.5 * data[index + 1] + 0.16 * data[index + 2];
+          if (data[index + 2] - data[index] > 10 && bright < 180) {
             if (x > spriteMaxX) spriteMaxX = x;
             if (x < spriteMinX) spriteMinX = x;
             if (y > spriteMaxY) spriteMaxY = y;
             if (y < spriteMinY) spriteMinY = y;
+          } else {
+            data[index + 0] = 255;
+            data[index + 1] = 255;
+            data[index + 2] = 255;
+            data[index + 3] = 0;
           }
         } else {
-          sprite[index + 0] = 255;
-          sprite[index + 1] = 255;
-          sprite[index + 2] = 255;
-          sprite[index + 3] = 0;
+          data[index + 0] = 255;
+          data[index + 1] = 255;
+          data[index + 2] = 255;
+          data[index + 3] = 0;
         }
       }
     }
 
+    return {
+      topLeftX: (minX + spriteMinX)/this.sampleRate,
+      topLeftY: (minY + spriteMinY)/this.sampleRate,
+      width: (spriteMaxX - spriteMinX)/this.sampleRate,
+      height: (spriteMaxY - spriteMinY)/this.sampleRate
+    };
+  }
+
+  loadSprite() {
+    if (!this.region) return;
+
+    const spriteInfo = this.findSprite();
+
     // save this as a sprite to draw later
     this.sprite = this.gameCtx.getImageData(
-      minX + spriteMinX, minY + spriteMinY,
-      spriteMaxX - spriteMinX, spriteMaxY - spriteMinY
+      spriteInfo.topLeftX,
+      spriteInfo.topLeftY,
+      spriteInfo.width,
+      spriteInfo.height
     );
+    for (let x = 0; x < this.sprite.width; x++) {
+      for (let y = 0; y < this.sprite.height; y++) {
+        const index = 4 * (y * this.sprite.width + x);
+        const bright = 0.34 * this.sprite.data[index] + 0.5 * this.sprite.data[index + 1] + 0.16 * this.sprite.data[index + 2];
+        if (this.sprite.data[index + 2] - this.sprite.data[index] > 10) {
+          this.sprite.data[index + 0] = 255;
+          this.sprite.data[index + 1] = 255;
+          this.sprite.data[index + 2] = 255;
+          this.sprite.data[index + 3] = 0;
+        }
+      }
+    }
     this.loadedSprite = true;
   }
 
@@ -236,7 +287,7 @@ class Stick {
       const x = c[0] / self.sampleRate;
       const y = c[1] / self.sampleRate;
       return [x, y];
-    }));
+    }), this.sprite);
   }
 }
 

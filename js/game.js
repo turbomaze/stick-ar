@@ -27,9 +27,9 @@ class Game {
     });
   }
 
-  step(corners) {
+  step(corners, sprite) {
     this.game.advanceState(corners);
-    this.game.render(corners);
+    this.game.render(corners, sprite);
   }
 
   getClickSegments(e) {

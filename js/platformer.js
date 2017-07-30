@@ -8,7 +8,7 @@ class Platformer extends GameInterface {
       x: 0,
       height: 0,
       vel: 0,
-      platformWidth: 0.75,
+      platformWidth: 0.35,
       platformSpacing: 0.25,
       platformHeight: 0.017,
       platforms: [0, 1, 2, 3, 4, 5].map(this.getPlatformHeight)
@@ -72,23 +72,32 @@ class Platformer extends GameInterface {
     }
   }
 
-  render(corners) {
+  render(corners, sprite) {
     const self = this;
 
     // draw the corner markers
-    const cornerSize = 0.02 * (corners[3][0] - corners[0][0]);
-    corners.forEach(c => {
-      self.handler.drawPoint(c[0], c[1], cornerSize, 'rgb(255, 0, 0)');
-    });
+    if (!sprite) {
+      const cornerSize = 0.02 * (corners[3][0] - corners[0][0]);
+      corners.forEach(c => {
+        self.handler.drawPoint(c[0], c[1], cornerSize, 'rgb(255, 0, 0)');
+      });
+    } else {
+      // white out the background
+      this.handler.drawPolygon(corners, 'rgb(240, 230, 230)');
+    }
 
     // draw the player
-    const ballRadius = 0.05;
-    const ballSize = ballRadius * (corners[3][0] - corners[0][0]);
-    const p = Game.project([
-      this.state.offset,
-      1 - this.state.height + ballRadius
-    ], corners);
-    this.handler.drawPoint(p[0], p[1], ballSize, 'rgb(90, 80, 88)');
+    if (sprite) {
+      this.handler.ctx.putImageData(sprite, 0, 0);
+    } else {
+      const ballRadius = 0.05;
+      const ballSize = ballRadius * (corners[3][0] - corners[0][0]);
+      const p = Game.project([
+        this.state.offset,
+        1 - this.state.height + ballRadius
+      ], corners);
+      this.handler.drawPoint(p[0], p[1], ballSize, 'rgb(90, 80, 88)');
+    }
 
     // draw the platforms
     const platformCost = this.state.platformWidth + this.state.platformSpacing;
