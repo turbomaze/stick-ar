@@ -54,20 +54,6 @@ class Stick {
         y: evt.clientY - rect.top
       };
     }
-
-    const self = this;
-    this.canvas.addEventListener('mousemove', function(evt) {
-      var mousePos = getMousePos(canvas, evt);
-      const imageData = self.ctx.getImageData(0, 0, self.width, self.height);
-      const index = self.width * mousePos.y + mousePos.x;
-      const color = [
-        imageData.data[index + 0],
-        imageData.data[index + 1],
-        imageData.data[index + 2],
-        imageData.data[index + 3]
-      ];
-      console.log(color);
-    }, false);
   }
 
   start() {
@@ -113,12 +99,16 @@ class Stick {
   processFrame() {
     const imageData = this.ctx.getImageData(0, 0, this.width, this.height);
     const data = imageData.data;
-    const threshold = 200;
-    if (Math.random() < 0.5) {
+    const threshold = 128;
+    const k = Math.pow(2, 6);
+    if (Math.random() < 1.5) {
       this.brightPx = [];
       const newData = new ImageData(this.width, this.height);
       for (let i = 0; i < data.length; i += 4) {
-        const bright = 0.34 * data[i] + 0.5 * data[i + 1] + 0.16 * data[i + 2];
+        const a = k * Math.floor(data[i + 0] / k);
+        const b = k * Math.floor(data[i + 1] / k);
+        const c = k * Math.floor(data[i + 2] / k);
+        const bright = 0.34 * a + 0.5 * b + 0.16 * c;
         if (bright > threshold) { 
           newData.data[i + 0] = 255;
         } else {
@@ -130,7 +120,7 @@ class Stick {
       const self = this;
       self.brightPx = Object.keys(blobs).map(key => {
         return StickARUtils.isSquare(self.width, self.height, blobs[key]);
-      }).find(a => a);
+      }).find(a => a) || [];
     }
     this.brightPx.forEach(i => {
       data[4 * i] = 255;
