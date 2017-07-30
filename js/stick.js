@@ -42,7 +42,7 @@ class Stick {
   }
 
   constructor(width, height, framerate, video, computeCanvas, gameCanvas) {
-    this.sampleRate = 0.25;
+    this.sampleRate = 0.125;
     this.video = video;
     this.computeCanvas = computeCanvas;
     this.gameCanvas = gameCanvas;
@@ -223,7 +223,7 @@ class Stick {
         const index = 4 * (y * computeData.width + x);
         if (StickARUtils.isInRegion([x, y], StickARUtils.sortCorners(smallCorners))) {
           const bright = 0.34 * data[index] + 0.5 * data[index + 1] + 0.16 * data[index + 2];
-          if (data[index + 2] - data[index] > 10 && bright < 180) {
+          if (data[index + 2] - data[index] > 13 && bright < 190) {
             if (x > spriteMaxX) spriteMaxX = x;
             if (x < spriteMinX) spriteMinX = x;
             if (y > spriteMaxY) spriteMaxY = y;
