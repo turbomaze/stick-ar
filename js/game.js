@@ -16,6 +16,8 @@ class Game {
       paddle1x: 0.1,
       paddle1y: 0.5,
       paddle1vel: 0,
+      paddleWidth: 0.05,
+      paddleHeight: 0.15,
 
       // paddle 2
       paddle2x: 0.9,
@@ -39,9 +41,13 @@ class Game {
       self.updateState({paddle1vel: 0});
     }
     this.canvas.addEventListener('mousedown', handleUserControlledPaddle);
-    this.canvas.addEventListener('touchstart', handleUserControlEnd);
+    this.canvas.addEventListener('touchstart', (e) => {
+      handleUserControlEnd(e.changedTouches[0]);
+    });
     this.canvas.addEventListener('mouseup', handleUserControlEnd);
-    this.canvas.addEventListener('touchend', handleUserControlEnd);
+    this.canvas.addEventListener('touchend', (e) => {
+      handleUserControlEnd(e.changedTouches[0]);
+    });
   }
 
   getClickSegments(e) {
@@ -84,11 +90,15 @@ class Game {
     // draw the paddles
     this.drawFatSegment(
       corners,
-      this.state.paddle1x, this.state.paddle1y, 0.05, 0.15, 'rgb(60, 60, 60)'
+      this.state.paddle1x, this.state.paddle1y,
+      this.state.paddleWidth, this.state.paddleHeight,
+      'rgb(60, 60, 60)'
     );
     this.drawFatSegment(
       corners,
-      this.state.paddle2x, this.state.paddle2y, 0.05, 0.15, 'rgb(60, 60, 60)'
+      this.state.paddle2x, this.state.paddle2y,
+      this.state.paddleWidth, this.state.paddleHeight,
+      0.05, 0.15, 'rgb(60, 60, 60)'
     );
   }
 
@@ -119,8 +129,14 @@ class Game {
     const newPaddle1Y = this.state.paddle1y + this.state.paddle1vel;
     const newPaddle2Y = this.state.paddle2y + this.state.paddle2vel;
     this.updateState({
-      paddle1y: Math.max(Math.min(newPaddle1Y, 1), 0),
-      paddle2y: Math.max(Math.min(newPaddle2Y, 1), 0)
+      paddle1y: Math.max(
+        Math.min(newPaddle1Y, 1 - this.state.paddleHeight/2),
+        this.state.paddleHeight/2
+      ),
+      paddle2y: Math.max(
+        Math.min(newPaddle2Y, 1 - this.state.paddleHeight/2),
+        this.state.paddleHeight/2
+      )
     });
   }
 
