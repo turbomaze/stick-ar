@@ -56,7 +56,7 @@ class Stick {
     this.gameHandler = new Game(
       this.width, this.height,
       this.gameCanvas, this.gameCtx,
-      Pong
+      Platformer
     );
   }
 
