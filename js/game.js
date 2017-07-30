@@ -1,55 +1,35 @@
 class Game {
-  constructor(width, height, canvas, ctx) {
+  constructor(width, height, canvas, ctx, GameType) {
     this.width = width;
     this.height = height;
     this.canvas = canvas;
     this.ctx = ctx;
-    this.state = {
-      // ball
-      x: 0.5,
-      y: 0.5,
-      radius: 0.05,
-      speed: 0.05,
-      angle: Math.random(2 * Math.PI),
-
-      // paddle 1
-      paddle1x: 0.1,
-      paddle1y: 0.5,
-      paddle1vel: 0,
-      paddleWidth: 0.05,
-      paddleHeight: 0.15,
-
-      // paddle 2
-      paddle2x: 0.9,
-      paddle2y: 0.5,
-      paddle2vel: 0,
-    };
+    this.game = new GameType(this)
   }
 
   start() {
     const self = this;
-    function handleUserControlledPaddle(e) {
+    function onMouseDown(e) {
       const clickData = self.getClickSegments(e);
-      if (clickData.segment.left) {
-        self.updateState({paddle1vel: -0.07});
-      } else if (clickData.segment.right) {
-        self.updateState({paddle1vel: 0.07});
-      }
+      self.game.onMouseDown(clickData);
     }
-    function handleUserControlEnd(e) {
+    function onMouseUp(e) {
       const clickData = self.getClickSegments(e);
-      self.updateState({paddle1vel: 0});
+      self.game.onMouseUp(clickData);
     }
-    this.canvas.addEventListener('mousedown', handleUserControlledPaddle);
+    this.canvas.addEventListener('mousedown', onMouseDown);
     this.canvas.addEventListener('touchstart', (e) => {
-      console.log(e.changedTouches[0]);
-      handleUserControlledPaddle(e.changedTouches[0]);
+      onMouseDown(e.changedTouches[0]);
     });
-    this.canvas.addEventListener('mouseup', handleUserControlEnd);
+    this.canvas.addEventListener('mouseup', onMouseUp);
     this.canvas.addEventListener('touchend', (e) => {
-      console.log(e.changedTouches[0]);
-      handleUserControlEnd(e.changedTouches[0]);
+      onMouseUp(e.changedTouches[0]);
     });
+  }
+
+  step(corners) {
+    this.game.advanceState(corners);
+    this.game.render(corners);
   }
 
   getClickSegments(e) {
@@ -69,101 +49,22 @@ class Game {
     return {pos, segment}
   }
 
-  updateState(newState) {
-    this.state = Object.assign({}, this.state, newState);
+  static project(point, corners) {
+    const x0 = Game.projectOnLine(point[0], corners[0], corners[3]);
+    const x1 = Game.projectOnLine(point[0], corners[1], corners[2]);
+    const y0 = Game.projectOnLine(point[1], corners[0], corners[1]);
+    const y1 = Game.projectOnLine(point[1], corners[3], corners[2]);
+    return Game.intersect([x0, x1], [y0, y1]);
   }
 
-  render(corners) {
-    const self = this;
-    this.advanceState();
-
-    // draw the corner markers
-    const cornerSize = 0.02 * (corners[3][0] - corners[0][0]);
-    corners.forEach(c => {
-      self.drawPoint(c[0], c[1], cornerSize, 'rgb(255, 0, 0)');
-    });
-
-    // draw the ball
-    const ballSize = this.state.radius * (corners[3][0] - corners[0][0]);
-    const p = this.project([this.state.x, this.state.y], corners);
-    this.drawPoint(p[0], p[1], ballSize, 'rgb(90, 80, 88)');
-
-
-    // draw the paddles
-    this.drawFatSegment(
-      corners,
-      this.state.paddle1x, this.state.paddle1y,
-      this.state.paddleWidth, this.state.paddleHeight,
-      'rgb(60, 60, 60)'
-    );
-    this.drawFatSegment(
-      corners,
-      this.state.paddle2x, this.state.paddle2y,
-      this.state.paddleWidth, this.state.paddleHeight,
-      0.05, 0.15, 'rgb(60, 60, 60)'
-    );
-  }
-
-  advanceState() {
-    // move the balls
-    const radius = this.state.radius;
-    const newX = this.state.x + this.state.speed * Math.cos(this.state.angle);
-    const newY = this.state.y + this.state.speed * Math.sin(this.state.angle);
-    if (
-      newX >= radius && newX < 1 - radius &&
-      newY >= radius && newY < 1 - radius
-    ) {
-      this.updateState({
-        x: newX,
-        y: newY
-      });
-    } else if (newX < radius || newX >= 1 - radius) {
-      this.updateState({
-        angle: (3 * Math.PI - this.state.angle) % (2 * Math.PI)
-      });
-    } else {
-      this.updateState({
-        angle: (2 * Math.PI - this.state.angle) % (2 * Math.PI)
-      });
-    }
-
-    // paddle 2 AI velocity
-    const k = 0.4;
-    this.updateState({
-      paddle2vel: k * (this.state.y - this.state.paddle2y)
-    });
-
-    // move the paddles
-    const newPaddle1Y = this.state.paddle1y + this.state.paddle1vel;
-    const newPaddle2Y = this.state.paddle2y + this.state.paddle2vel;
-    this.updateState({
-      paddle1y: Math.max(
-        Math.min(newPaddle1Y, 1 - this.state.paddleHeight/2),
-        this.state.paddleHeight/2
-      ),
-      paddle2y: Math.max(
-        Math.min(newPaddle2Y, 1 - this.state.paddleHeight/2),
-        this.state.paddleHeight/2
-      )
-    });
-  }
-
-  project(point, corners) {
-    const x0 = this.projectOnLine(point[0], corners[0], corners[3]);
-    const x1 = this.projectOnLine(point[0], corners[1], corners[2]);
-    const y0 = this.projectOnLine(point[1], corners[0], corners[1]);
-    const y1 = this.projectOnLine(point[1], corners[3], corners[2]);
-    return this.intersect([x0, x1], [y0, y1]);
-  }
-
-  projectOnLine(value, p, q) {
+  static projectOnLine(value, p, q) {
     return [
       value * q[0] + (1 - value) * p[0],
       value * q[1] + (1 - value) * p[1],
     ];
   }
 
-  intersect(a, b) {
+  static intersect(a, b) {
     const x1 = a[0][0], y1 = a[0][1], x2 = a[1][0], y2 = a[1][1];
     const x3 = b[0][0], y3 = b[0][1], x4 = b[1][0], y4 = b[1][1];
     const denom = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4);
@@ -182,16 +83,16 @@ class Game {
 
   // x, y are the center
   drawFatSegment(corners, mathX, mathY, width, height, color) {
-    const topLeft = this.project([
+    const topLeft = Game.project([
       mathX - width/2, mathY - height/2
     ], corners);
-    const topRight = this.project([
+    const topRight = Game.project([
       mathX + width/2, mathY - height/2
     ], corners);
-    const bottomLeft = this.project([
+    const bottomLeft = Game.project([
       mathX - width/2, mathY + height/2
     ], corners);
-    const bottomRight = this.project([
+    const bottomRight = Game.project([
       mathX + width/2, mathY + height/2
     ], corners);
     this.drawPolygon([topLeft, topRight, bottomRight, bottomLeft], color)

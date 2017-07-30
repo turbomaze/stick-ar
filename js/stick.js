@@ -30,7 +30,7 @@ class Stick {
           StickARUtils.forceFullScreen();
         }
         stick.isFullScreen = true;
-        stick.game.start();
+        stick.gameHandler.start();
       }
     });
     if (document.location.hash !== '#desktop') {
@@ -53,9 +53,10 @@ class Stick {
     this.region = false;
     this.totalTime = 0;
     this.totalFrames = 0;
-    this.game = new Game(
+    this.gameHandler = new Game(
       this.width, this.height,
-      this.gameCanvas, this.gameCtx
+      this.gameCanvas, this.gameCtx,
+      Pong
     );
   }
 
@@ -172,7 +173,7 @@ class Stick {
 
     const self = this;
 
-    this.game.render(this.region.corners.map(c => {
+    this.gameHandler.step(this.region.corners.map(c => {
       const x = c[0] / self.sampleRate;
       const y = c[1] / self.sampleRate;
       return [x, y];
