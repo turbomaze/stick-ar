@@ -1,7 +1,13 @@
 * {
   margin: 0;
   padding: 0;
+	overflow-x: hidden;
 }
+
+body {
+ 	position: relative
+}
+
 video, canvas#compute {
   position: absolute;
   visibility: hidden;

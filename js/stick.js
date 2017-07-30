@@ -1,7 +1,7 @@
 class Stick {
   static init() {
     const stick = new Stick(
-      1200,
+      1280,
       720,
       15,
       document.querySelector('video'),
@@ -68,7 +68,7 @@ class Stick {
         // videoWidth isn't always set correctly in all browsers
         if (self.video.videoWidth > 0) {
           const ratio = self.video.videoWidth / self.width;
-          self.height = self.video.videoHeight / ratio;
+          // self.height = self.video.videoHeight / ratio;
         }
         self.computeCanvas.setAttribute('width', self.width*self.sampleRate);
         self.computeCanvas.setAttribute('height', self.height*self.sampleRate);
