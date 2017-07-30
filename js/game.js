@@ -127,6 +127,12 @@ class Game {
       });
     }
 
+    // paddle 2 AI velocity
+    const k = 0.4;
+    this.updateState({
+      paddle2vel: k * (this.state.y - this.state.paddle2y)
+    });
+
     // move the paddles
     const newPaddle1Y = this.state.paddle1y + this.state.paddle1vel;
     const newPaddle2Y = this.state.paddle2y + this.state.paddle2vel;
