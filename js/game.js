@@ -26,19 +26,22 @@ class Game {
 
   start() {
     const self = this;
-    this.canvas.addEventListener('mousedown', (e) => {
+    function handleUserControlledPaddle(e) {
       const clickData = self.getClickSegments(e);
       if (clickData.segment.left) {
         self.updateState({paddle1vel: -0.07});
       } else if (clickData.segment.right) {
         self.updateState({paddle1vel: 0.07});
       }
-    });
-
-    this.canvas.addEventListener('mouseup', (e) => {
+    }
+    function handleUserControlEnd(e) {
       const clickData = self.getClickSegments(e);
       self.updateState({paddle1vel: 0});
-    });
+    }
+    this.canvas.addEventListener('mousedown', handleUserControlledPaddle);
+    this.canvas.addEventListener('touchstart', handleUserControlEnd);
+    this.canvas.addEventListener('mouseup', handleUserControlEnd);
+    this.canvas.addEventListener('touchend', handleUserControlEnd);
   }
 
   getClickSegments(e) {
