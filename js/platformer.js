@@ -2,14 +2,15 @@ class Platformer extends GameInterface {
   constructor(handler) {
     super(handler);
     this.state = {
-      offset: 0.4,
+      offset: 0.3,
       speed: 0.03,
+      jumpSpeed: 0.15,
       x: 0,
       height: 0,
       vel: 0,
-      platformWidth: 0.15,
-      platformSpacing: 0.2,
-      platformHeight: 0.01,
+      platformWidth: 0.75,
+      platformSpacing: 0.25,
+      platformHeight: 0.017,
       platforms: [0, 1, 2, 3, 4, 5].map(this.getPlatformHeight)
     };
   }
@@ -19,19 +20,50 @@ class Platformer extends GameInterface {
   }
 
   onMouseDown(clickData) {
-    this.updateState({vel: 0.1});
+    this.updateState({
+      vel: this.state.jumpSpeed,
+      jumping: true
+    });
   }
 
   advanceState(corners) {
-    const newHeight = this.state.height + this.state.vel;
     const g = 0.03;
-    this.updateState({
-      x: this.state.x + this.state.speed,
-      height: Math.max(Math.min(newHeight, 1), 0),
-      vel: newHeight < 0 ? 0 : (newHeight > 1 ? 0 : this.state.vel - g)
-    });
     const platformCost = this.state.platformWidth + this.state.platformSpacing;
     const platformReach = this.state.platforms.length * platformCost;
+    const beginningIndex = Math.ceil(this.state.x/platformCost);
+    const numToCheck = Math.ceil(1 / platformCost) + 1;
+    let isOverPlatform = false;
+    for (let i = beginningIndex; i < beginningIndex + numToCheck; i++) {
+      const platformStart = i * platformCost - this.state.platformWidth/2;
+      const playerPosition = this.state.x + this.state.offset;
+      if (
+        playerPosition > platformStart &&
+        playerPosition < platformStart + this.state.platformWidth
+      ) {
+        isOverPlatform = i;
+      }
+    }
+    const radius = 0.05
+    let newHeight = this.state.height + this.state.vel;
+    let newVel = newHeight < 0 ? 0 : (newHeight > 1 ? 0 : this.state.vel - g);
+    if (isOverPlatform) {
+      const bottom = this.state.height - radius;
+      const newBottom = newHeight - radius;
+      if (
+        bottom > 1 - this.state.platforms[isOverPlatform] &&
+        newBottom < 1 - this.state.platforms[isOverPlatform] &&
+        !this.state.jumping
+      ) {
+        newHeight = 1 - this.state.platforms[isOverPlatform] + 2.01 * radius
+        newVel = 0;
+      }
+    }
+    this.updateState({
+      x: this.state.x + this.state.speed,
+      height: Math.max(Math.min(newHeight, 1), radius),
+      vel: newVel,
+      jumping: newVel > 0,
+    });
     const addNewPlatform = this.state.x + 1 > platformReach;
     if (addNewPlatform) {
       this.updateState({
@@ -50,11 +82,11 @@ class Platformer extends GameInterface {
     });
 
     // draw the player
-    const radius = 0.05;
-    const ballSize = radius * (corners[3][0] - corners[0][0]);
+    const ballRadius = 0.05;
+    const ballSize = ballRadius * (corners[3][0] - corners[0][0]);
     const p = Game.project([
       this.state.offset,
-      1 - this.state.height + radius
+      1 - this.state.height + ballRadius
     ], corners);
     this.handler.drawPoint(p[0], p[1], ballSize, 'rgb(90, 80, 88)');
 
