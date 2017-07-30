@@ -1,21 +1,20 @@
 * {
   margin: 0;
   padding: 0;
-	overflow-x: hidden;
+  overflow-x: hidden;
 }
 
 html {
-	width: 100vw; !important
-	height: 100vh; !important
+  width: 100vw; !important
 }
 
 body {
- 	position: relative
+  position: relative;
 }
 
 video, canvas#compute {
   position: absolute;
-  visibility: hidden;
+  display: none;
 }
 canvas {
   width: 100%;
