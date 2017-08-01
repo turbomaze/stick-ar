@@ -81,6 +81,34 @@ class Game {
     this.ctx.fill();
   }
 
+  projectCircle(corners, x, y, r, color) {
+    const p = Game.project([x, y], corners);
+    const topPoint = Game.project([x, y - r], corners);
+    const rightPoint = Game.project([x + r, y], corners);
+    const bottomPoint = Game.project([x, y + r], corners);
+    const leftPoint = Game.project([x - r, y], corners);
+    const angle = Math.atan2(
+      bottomPoint[1] - topPoint[1],
+      bottomPoint[0] - topPoint[0]
+    );
+    const rMin = 2 * Math.sqrt(
+      Math.pow(bottomPoint[0] - topPoint[0], 2) +
+      Math.pow(bottomPoint[1] - topPoint[1], 2)
+    ) / 2;
+    const rMax = Math.sqrt(
+      Math.pow(rightPoint[0] - leftPoint[0], 2) +
+      Math.pow(rightPoint[1] - leftPoint[1], 2)
+    ) / 2;
+    this.drawEllipse(p[0], p[1], rMin, rMax, angle, color);
+  }
+
+  drawEllipse(x, y, rMin, rMax, rotation, color) {
+    this.ctx.fillStyle = color;
+    this.ctx.beginPath();
+    this.ctx.ellipse(x, y, rMin, rMax, rotation, 0, 2 * Math.PI);
+    this.ctx.fill();
+  }
+
   // x, y are the center
   drawFatSegment(corners, mathX, mathY, width, height, color) {
     const topLeft = Game.project([

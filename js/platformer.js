@@ -97,12 +97,11 @@ class Platformer extends GameInterface {
       this.handler.ctx.putImageData(sprite, p[0], p[1]);
     } else {
       const ballRadius = 0.05;
-      const ballSize = ballRadius * (corners[3][0] - corners[0][0]);
-      const p = Game.project([
-        this.state.offset,
-        1 - this.state.height + ballRadius
-      ], corners);
-      this.handler.drawPoint(p[0], p[1], ballSize, 'rgb(90, 80, 88)');
+      this.handler.projectCircle(
+        corners,
+        this.state.offset, 1 - this.state.height + ballRadius,
+        ballRadius, 'rgb(90, 80, 88)'
+      );
     }
 
     // draw the platforms
