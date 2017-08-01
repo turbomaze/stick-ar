@@ -19,20 +19,20 @@ class Pong extends GameInterface {
       // paddle 2
       paddle2x: 0.9,
       paddle2y: 0.5,
-      paddle2vel: 0,
+      paddle2vel: 0
     };
   }
 
   onMouseDown(clickData) {
     if (clickData.segment.left) {
-      this.updateState({paddle1vel: -0.07});
+      this.updateState({ paddle1vel: -0.07 });
     } else if (clickData.segment.right) {
-      this.updateState({paddle1vel: 0.07});
+      this.updateState({ paddle1vel: 0.07 });
     }
   }
 
   onMouseUp(clickData) {
-    this.updateState({paddle1vel: 0});
+    this.updateState({ paddle1vel: 0 });
   }
 
   advanceState(corners) {
@@ -41,8 +41,10 @@ class Pong extends GameInterface {
     const newX = this.state.x + this.state.speed * Math.cos(this.state.angle);
     const newY = this.state.y + this.state.speed * Math.sin(this.state.angle);
     if (
-      newX >= radius && newX < 1 - radius &&
-      newY >= radius && newY < 1 - radius
+      newX >= radius &&
+      newX < 1 - radius &&
+      newY >= radius &&
+      newY < 1 - radius
     ) {
       this.updateState({
         x: newX,
@@ -69,12 +71,12 @@ class Pong extends GameInterface {
     const newPaddle2Y = this.state.paddle2y + this.state.paddle2vel;
     this.updateState({
       paddle1y: Math.max(
-        Math.min(newPaddle1Y, 1 - this.state.paddleHeight/2),
-        this.state.paddleHeight/2
+        Math.min(newPaddle1Y, 1 - this.state.paddleHeight / 2),
+        this.state.paddleHeight / 2
       ),
       paddle2y: Math.max(
-        Math.min(newPaddle2Y, 1 - this.state.paddleHeight/2),
-        this.state.paddleHeight/2
+        Math.min(newPaddle2Y, 1 - this.state.paddleHeight / 2),
+        this.state.paddleHeight / 2
       )
     });
   }
@@ -85,27 +87,32 @@ class Pong extends GameInterface {
     // draw the corner markers
     const cornerSize = 0.02 * (corners[3][0] - corners[0][0]);
     corners.forEach(c => {
-      self.handler.drawPoint(c[0], c[1], cornerSize, 'rgb(255, 0, 0)');
+      self.handler.drawPoint(c[0], c[1], cornerSize, "rgb(255, 0, 0)");
     });
 
     // draw the ball
     const ballSize = this.state.radius * (corners[3][0] - corners[0][0]);
     const p = Game.project([this.state.x, this.state.y], corners);
-    this.handler.drawPoint(p[0], p[1], ballSize, 'rgb(90, 80, 88)');
-
+    this.handler.drawPoint(p[0], p[1], ballSize, "rgb(90, 80, 88)");
 
     // draw the paddles
     this.handler.drawFatSegment(
       corners,
-      this.state.paddle1x, this.state.paddle1y,
-      this.state.paddleWidth, this.state.paddleHeight,
-      'rgb(60, 60, 60)'
+      this.state.paddle1x,
+      this.state.paddle1y,
+      this.state.paddleWidth,
+      this.state.paddleHeight,
+      "rgb(60, 60, 60)"
     );
     this.handler.drawFatSegment(
       corners,
-      this.state.paddle2x, this.state.paddle2y,
-      this.state.paddleWidth, this.state.paddleHeight,
-      0.05, 0.15, 'rgb(60, 60, 60)'
+      this.state.paddle2x,
+      this.state.paddle2y,
+      this.state.paddleWidth,
+      this.state.paddleHeight,
+      0.05,
+      0.15,
+      "rgb(60, 60, 60)"
     );
   }
 }

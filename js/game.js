@@ -4,7 +4,7 @@ class Game {
     this.height = height;
     this.canvas = canvas;
     this.ctx = ctx;
-    this.game = new GameType(this)
+    this.game = new GameType(this);
   }
 
   start() {
@@ -17,12 +17,12 @@ class Game {
       const clickData = self.getClickSegments(e);
       self.game.onMouseUp(clickData);
     }
-    this.canvas.addEventListener('mousedown', onMouseDown);
-    this.canvas.addEventListener('touchstart', (e) => {
+    this.canvas.addEventListener("mousedown", onMouseDown);
+    this.canvas.addEventListener("touchstart", e => {
       onMouseDown(e.changedTouches[0]);
     });
-    this.canvas.addEventListener('mouseup', onMouseUp);
-    this.canvas.addEventListener('touchend', (e) => {
+    this.canvas.addEventListener("mouseup", onMouseUp);
+    this.canvas.addEventListener("touchend", e => {
       onMouseUp(e.changedTouches[0]);
     });
   }
@@ -46,7 +46,7 @@ class Game {
     } else {
       segment.bottom = true;
     }
-    return {pos, segment}
+    return { pos, segment };
   }
 
   static project(point, corners) {
@@ -60,17 +60,25 @@ class Game {
   static projectOnLine(value, p, q) {
     return [
       value * q[0] + (1 - value) * p[0],
-      value * q[1] + (1 - value) * p[1],
+      value * q[1] + (1 - value) * p[1]
     ];
   }
 
   static intersect(a, b) {
-    const x1 = a[0][0], y1 = a[0][1], x2 = a[1][0], y2 = a[1][1];
-    const x3 = b[0][0], y3 = b[0][1], x4 = b[1][0], y4 = b[1][1];
-    const denom = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4);
-    const xNum = (x1*y2-y1*x2)*(x3-x4) - (x1-x2)*(x3*y4-y3*x4);
-    const yNum = (x1*y2-y1*x2)*(y3-y4) - (y1-y2)*(x3*y4-y3*x4);
-    return [xNum/denom, yNum/denom];
+    const x1 = a[0][0],
+      y1 = a[0][1],
+      x2 = a[1][0],
+      y2 = a[1][1];
+    const x3 = b[0][0],
+      y3 = b[0][1],
+      x4 = b[1][0],
+      y4 = b[1][1];
+    const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    const xNum =
+      (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4);
+    const yNum =
+      (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4);
+    return [xNum / denom, yNum / denom];
   }
 
   drawPoint(x, y, r, color) {
@@ -91,14 +99,18 @@ class Game {
       bottomPoint[1] - topPoint[1],
       bottomPoint[0] - topPoint[0]
     );
-    const rMin = 2 * Math.sqrt(
-      Math.pow(bottomPoint[0] - topPoint[0], 2) +
-      Math.pow(bottomPoint[1] - topPoint[1], 2)
-    ) / 2;
-    const rMax = Math.sqrt(
-      Math.pow(rightPoint[0] - leftPoint[0], 2) +
-      Math.pow(rightPoint[1] - leftPoint[1], 2)
-    ) / 2;
+    const rMin =
+      2 *
+      Math.sqrt(
+        Math.pow(bottomPoint[0] - topPoint[0], 2) +
+          Math.pow(bottomPoint[1] - topPoint[1], 2)
+      ) /
+      2;
+    const rMax =
+      Math.sqrt(
+        Math.pow(rightPoint[0] - leftPoint[0], 2) +
+          Math.pow(rightPoint[1] - leftPoint[1], 2)
+      ) / 2;
     this.drawEllipse(p[0], p[1], rMin, rMax, angle, color);
   }
 
@@ -111,19 +123,23 @@ class Game {
 
   // x, y are the center
   drawFatSegment(corners, mathX, mathY, width, height, color) {
-    const topLeft = Game.project([
-      mathX - width/2, mathY - height/2
-    ], corners);
-    const topRight = Game.project([
-      mathX + width/2, mathY - height/2
-    ], corners);
-    const bottomLeft = Game.project([
-      mathX - width/2, mathY + height/2
-    ], corners);
-    const bottomRight = Game.project([
-      mathX + width/2, mathY + height/2
-    ], corners);
-    this.drawPolygon([topLeft, topRight, bottomRight, bottomLeft], color)
+    const topLeft = Game.project(
+      [mathX - width / 2, mathY - height / 2],
+      corners
+    );
+    const topRight = Game.project(
+      [mathX + width / 2, mathY - height / 2],
+      corners
+    );
+    const bottomLeft = Game.project(
+      [mathX - width / 2, mathY + height / 2],
+      corners
+    );
+    const bottomRight = Game.project(
+      [mathX + width / 2, mathY + height / 2],
+      corners
+    );
+    this.drawPolygon([topLeft, topRight, bottomRight, bottomLeft], color);
   }
 
   drawPolygon(points, color) {
