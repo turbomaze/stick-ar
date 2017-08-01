@@ -208,27 +208,26 @@ class StickARUtils {
     });
     let bestArea = StickARUtils.getArea.apply(null, bestPoints);
 
-    const numRounds = 5000;
+    const numRounds = 600;
     for (let i = 0; i < numRounds; i++) {
       // pick new points
-      const candidateA = StickARUtils.randomPoint(width, height, indices);
-      const candidateB = StickARUtils.randomPoint(width, height, indices);
+      const candidate = StickARUtils.randomPoint(width, height, indices);
 
       // points to keep
       const keeperA = i % 4;
       const keeperB = (i + 1) % 4;
+      const keeperC = (i + 2) % 4;
 
       // compare
       const candidateArea = StickARUtils.getArea(
-        candidateA,
-        candidateB,
+        candidate,
         bestPoints[keeperA],
-        bestPoints[keeperB]
+        bestPoints[keeperB],
+        bestPoints[keeperC]
       );
       if (candidateArea > bestArea) {
         bestArea = candidateArea;
-        bestPoints[(keeperA + 2) % 4] = candidateA;
-        bestPoints[(keeperB + 2) % 4] = candidateB;
+        bestPoints[(keeperC + 1) % 4] = candidate;
       }
     }
     return StickARUtils.sortCorners(bestPoints);
