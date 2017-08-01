@@ -8,21 +8,7 @@ class Stick {
       document.getElementById("compute"),
       document.getElementById("game")
     );
-    stick.start();
-
-    StickARUtils.registerVideoHandlers(
-      stick.width,
-      stick.height,
-      stream => {
-        stick.video.srcObject = stream;
-        stick.video.onloadedmetadata = e => {
-          stick.video.play();
-        };
-      },
-      err => {
-        alert("Something went wrong. (error code " + err.code + ")");
-      }
-    );
+    document.getElementById("game").style.display = "none";
 
     // start the process when they start full screen/landscape
     document.body.addEventListener("click", function() {
@@ -31,14 +17,27 @@ class Stick {
           StickARUtils.forceFullScreen();
         }
         stick.isFullScreen = true;
+
+        // begin the animation sequence that introduces the video
+        document.getElementById("welcome").className = "clicked";
+        stick.start();
+        stick.gameHandler.start();
+        document.getElementById("game").style.display = "block";
+        setTimeout(() => {
+          document.getElementById("welcome").style.display = "none";
+        }, 1000);
       } else if (!stick.loadedSprite) {
         // load the sprite
         stick.loadSprite();
-        stick.gameHandler.start();
       }
     });
     if (document.location.hash !== "#desktop") {
-      screen.orientation.lock("landscape");
+      try {
+        screen.orientation.lock("landscape");
+      } catch (e) {
+        console.log("Encountered screen orientation lock error.");
+        console.log(e);
+      }
     }
   }
 
@@ -139,6 +138,21 @@ class Stick {
         }, 1000 / self.framerate);
       },
       false
+    );
+
+    // register all the handlers
+    StickARUtils.registerVideoHandlers(
+      this.width,
+      this.height,
+      stream => {
+        self.video.srcObject = stream;
+        self.video.onloadedmetadata = e => {
+          self.video.play();
+        };
+      },
+      err => {
+        alert("Something went wrong. (error code " + err.code + ")");
+      }
     );
   }
 
