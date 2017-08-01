@@ -191,12 +191,13 @@ class StickARUtils {
     return indices.length > 50
       ? indices.filter(i => {
           const pos = [i % width, Math.floor(i / width)];
-          let neighbors = 0;
-          if ((set[pos[0] - 1] || {})[pos[1] + 0]) neighbors++;
-          if ((set[pos[0] + 1] || {})[pos[1] + 0]) neighbors++;
-          if ((set[pos[0]] || {})[pos[1] - 1]) neighbors++;
-          if ((set[pos[0]] || {})[pos[1] + 1]) neighbors++;
-          return neighbors <= 2;
+          return (
+            !!(set[pos[0] - 1] || {})[pos[1] + 0] +
+              !!(set[pos[0] + 1] || {})[pos[1] + 0] +
+              !!(set[pos[0]] || {})[pos[1] - 1] +
+              !!(set[pos[0]] || {})[pos[1] + 1] <=
+            2
+          );
         })
       : [];
   }
