@@ -265,10 +265,8 @@ class Stick {
       const bright = data[i] + data[i + 1] + data[i + 2];
       if (bright > threshold) {
         newData.data[i] = 255;
-        newData.data[i + 3] = 255;
       } else {
         newData.data[i] = 0;
-        newData.data[i + 3] = 255;
       }
     }
 
