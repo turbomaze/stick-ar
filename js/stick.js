@@ -187,73 +187,73 @@ class Stick {
       );
     }
 
-    // compute edges
-    const gray = new ImageData(computeData.width, computeData.height);
-    const xGradient = new ImageData(computeData.width, computeData.height);
-    const yGradient = new ImageData(computeData.width, computeData.height);
-    const gradient = new ImageData(computeData.width, computeData.height);
-    const xKernel = [
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [1, 2, 0, -2, -1],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0]
-    ];
-    const yKernel = [
-      [0, 0, 1, 0, 0],
-      [0, 0, 2, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, -2, 0, 0],
-      [0, 0, -1, 0, 0]
-    ];
-    for (let y = 2; y < xGradient.height - 2; y++) {
-      for (let x = 2; x < xGradient.width - 2; x++) {
-        const index = 4 * (y * xGradient.width + x);
-        const brightness = Math.floor(
-          0.34 * computeData.data[index] +
-            0.5 * computeData.data[index] +
-            0.16 * computeData.data[index]
-        );
-        gray.data[index] = brightness;
-        gray.data[index + 1] = brightness;
-        gray.data[index + 2] = brightness;
-        gray.data[index + 3] = 255;
-        xGradient.data[index] = 0;
-        yGradient.data[index] = 0;
-        for (let ny = -2; ny <= 2; ny++) {
-          for (let nx = -2; nx <= 2; nx++) {
-            const indexGrad = 4 * ((y + ny) * xGradient.width + x + nx);
-            xGradient.data[index] +=
-              xKernel[ny + 2][nx + 2] * computeData.data[indexGrad];
-            yGradient.data[index] +=
-              yKernel[ny + 2][nx + 2] * computeData.data[indexGrad];
+    if (document.location.hash.indexOf("debug") !== -1) {
+      // compute edges
+      const gray = new ImageData(computeData.width, computeData.height);
+      const xGradient = new ImageData(computeData.width, computeData.height);
+      const yGradient = new ImageData(computeData.width, computeData.height);
+      const gradient = new ImageData(computeData.width, computeData.height);
+      const xKernel = [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [1, 2, 0, -2, -1],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0]
+      ];
+      const yKernel = [
+        [0, 0, 1, 0, 0],
+        [0, 0, 2, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, -2, 0, 0],
+        [0, 0, -1, 0, 0]
+      ];
+      for (let y = 2; y < xGradient.height - 2; y++) {
+        for (let x = 2; x < xGradient.width - 2; x++) {
+          const index = 4 * (y * xGradient.width + x);
+          const brightness = Math.floor(
+            0.34 * computeData.data[index] +
+              0.5 * computeData.data[index] +
+              0.16 * computeData.data[index]
+          );
+          gray.data[index] = brightness;
+          gray.data[index + 1] = brightness;
+          gray.data[index + 2] = brightness;
+          gray.data[index + 3] = 255;
+          xGradient.data[index] = 0;
+          yGradient.data[index] = 0;
+          for (let ny = -2; ny <= 2; ny++) {
+            for (let nx = -2; nx <= 2; nx++) {
+              const indexGrad = 4 * ((y + ny) * xGradient.width + x + nx);
+              xGradient.data[index] +=
+                xKernel[ny + 2][nx + 2] * computeData.data[indexGrad];
+              yGradient.data[index] +=
+                yKernel[ny + 2][nx + 2] * computeData.data[indexGrad];
+            }
           }
+          xGradient.data[index] = xGradient.data[index];
+          xGradient.data[index + 1] = xGradient.data[index];
+          xGradient.data[index + 2] = xGradient.data[index];
+          xGradient.data[index + 3] = 255;
+          yGradient.data[index] = yGradient.data[index];
+          yGradient.data[index + 1] = yGradient.data[index];
+          yGradient.data[index + 2] = yGradient.data[index];
+          yGradient.data[index + 3] = 255;
+          gradient.data[index] = xGradient.data[index];
+          gradient.data[index + 1] = yGradient.data[index];
+          gradient.data[index + 3] = 255;
         }
-        xGradient.data[index] = xGradient.data[index];
-        xGradient.data[index + 1] = xGradient.data[index];
-        xGradient.data[index + 2] = xGradient.data[index];
-        xGradient.data[index + 3] = 255;
-        yGradient.data[index] = yGradient.data[index];
-        yGradient.data[index + 1] = yGradient.data[index];
-        yGradient.data[index + 2] = yGradient.data[index];
-        yGradient.data[index + 3] = 255;
-        gradient.data[index] = xGradient.data[index];
-        gradient.data[index + 1] = yGradient.data[index];
-        gradient.data[index + 3] = 255;
       }
+      this.logComputeDataToCanvas(gray, 0);
+      this.logComputeDataToCanvas(xGradient, 1);
+      this.logComputeDataToCanvas(yGradient, 2);
+      this.logComputeDataToCanvas(gradient, 3);
     }
-    this.logComputeDataToCanvas(gray, 0);
-    this.logComputeDataToCanvas(xGradient, 1);
-    this.logComputeDataToCanvas(yGradient, 2);
-    this.logComputeDataToCanvas(gradient, 3);
 
     this.renderGame();
   }
 
   logComputeDataToCanvas(imageData, index) {
-    if (document.location.hash.indexOf("debug") !== -1) {
-      this.gameCtx.putImageData(imageData, index * this.computeCanvas.width, 0);
-    }
+    this.gameCtx.putImageData(imageData, index * this.computeCanvas.width, 0);
   }
 
   getBestSquare(imageData) {
