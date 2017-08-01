@@ -96,21 +96,22 @@ class Game {
     const bottomPoint = Game.project([x, y + r], corners);
     const leftPoint = Game.project([x - r, y], corners);
     const angle = Math.atan2(
-      bottomPoint[1] - topPoint[1],
-      bottomPoint[0] - topPoint[0]
+      topPoint[1] - bottomPoint[1],
+      topPoint[0] - bottomPoint[0]
     );
+    const surfaceAspectRatio = 1.618; // TODO: hacky
     const rMin =
-      2 *
+      Math.sqrt(
+        Math.pow(rightPoint[0] - leftPoint[0], 2) +
+          Math.pow(rightPoint[1] - leftPoint[1], 2)
+      ) / 2;
+    const rMax =
+      surfaceAspectRatio *
       Math.sqrt(
         Math.pow(bottomPoint[0] - topPoint[0], 2) +
           Math.pow(bottomPoint[1] - topPoint[1], 2)
       ) /
       2;
-    const rMax =
-      Math.sqrt(
-        Math.pow(rightPoint[0] - leftPoint[0], 2) +
-          Math.pow(rightPoint[1] - leftPoint[1], 2)
-      ) / 2;
     this.drawEllipse(p[0], p[1], rMin, rMax, angle, color);
   }
 
