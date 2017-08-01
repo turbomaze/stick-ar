@@ -165,7 +165,7 @@ class Stick {
     );
 
     const candidateRegion = this.getBestSquare(computeData);
-    const maxStale = 2;
+    const maxStale = 16;
     if (candidateRegion) {
       this.region = candidateRegion;
     } else if (this.region && (this.region.stale || 0) < maxStale) {
