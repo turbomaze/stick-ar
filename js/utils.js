@@ -134,7 +134,7 @@ class StickARUtils {
           indicesSet
         );
       }
-      const minArea = 1000;
+      const minArea = width * height * (1 / 50);
       if (indices.length > minArea) {
         if (oldCorners && oldScore > 0.8 && oldScore > score) {
           return {
@@ -188,7 +188,7 @@ class StickARUtils {
         set[pair[0]] = set[pair[0]] || {};
         set[pair[0]][pair[1]] = true;
       });
-    return indices.length > 100
+    return indices.length > 50
       ? indices.filter(i => {
           const pos = [i % width, Math.floor(i / width)];
           let neighbors = 0;
