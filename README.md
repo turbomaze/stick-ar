@@ -1,13 +1,15 @@
 StickAR
 ==
 
-StickAR lets you make mixed-reality games using technology you already know how to use<sup>1</sup> for devices you already have in your pocket<sup>2</sup>.
+StickAR<sup>0</sup> lets you make mixed-reality games using technology you already know how to use<sup>1</sup> for devices you already have in your pocket<sup>2</sup>.
 
 Initially developed at Greylock Hackfest 2017 (in vanilla JS w/o any libraries ;)).
 
+<small>[0] pronounced "sticker"</small>
+
 <small>[1] HTML5 and JavaScript</small>
 
-<small>[2] Phones with a rear cameras and chrome browsers</small>
+<small>[2] Phones with a rear cameras and Chrome browsers</small>
 
 ## Details
 As exciting as augmented reality is, currently it's neither accessible to developers nor to users. Developers need to navigate new, complex libraries, and in practice, users only ever interact with AR thanks to Snapchat.
