@@ -193,22 +193,10 @@ class Stick {
       const xGradient = new ImageData(computeData.width, computeData.height);
       const yGradient = new ImageData(computeData.width, computeData.height);
       const gradient = new ImageData(computeData.width, computeData.height);
-      const xKernel = [
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [1, 2, 0, -2, -1],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0]
-      ];
-      const yKernel = [
-        [0, 0, 1, 0, 0],
-        [0, 0, 2, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, -2, 0, 0],
-        [0, 0, -1, 0, 0]
-      ];
-      for (let y = 2; y < xGradient.height - 2; y++) {
-        for (let x = 2; x < xGradient.width - 2; x++) {
+      const xKernel = [[1, 0, -1], [2, 0, -2], [1, 0, -1]];
+      const yKernel = [[1, 2, 1], [0, 0, 0], [-1, -2, -1]];
+      for (let y = 1; y < xGradient.height - 1; y++) {
+        for (let x = 1; x < xGradient.width - 1; x++) {
           const index = 4 * (y * xGradient.width + x);
           const brightness = Math.floor(
             0.34 * computeData.data[index] +
@@ -221,20 +209,22 @@ class Stick {
           gray.data[index + 3] = 255;
           xGradient.data[index] = 0;
           yGradient.data[index] = 0;
-          for (let ny = -2; ny <= 2; ny++) {
-            for (let nx = -2; nx <= 2; nx++) {
+          let sumX = 0;
+          let sumY = 0;
+          for (let ny = -1; ny <= 1; ny++) {
+            for (let nx = -1; nx <= 1; nx++) {
               const indexGrad = 4 * ((y + ny) * xGradient.width + x + nx);
-              xGradient.data[index] +=
-                xKernel[ny + 2][nx + 2] * computeData.data[indexGrad];
-              yGradient.data[index] +=
-                yKernel[ny + 2][nx + 2] * computeData.data[indexGrad];
+              sumX += xKernel[ny + 1][nx + 1] * computeData.data[indexGrad];
+              sumY += yKernel[ny + 1][nx + 1] * computeData.data[indexGrad];
             }
           }
-          xGradient.data[index] = xGradient.data[index];
+          const shiftedX = Math.floor(256 * Math.abs(sumX) / 1024);
+          const shiftedY = Math.floor(256 * Math.abs(sumY) / 1024);
+          xGradient.data[index] = shiftedX;
           xGradient.data[index + 1] = xGradient.data[index];
           xGradient.data[index + 2] = xGradient.data[index];
           xGradient.data[index + 3] = 255;
-          yGradient.data[index] = yGradient.data[index];
+          yGradient.data[index] = shiftedY;
           yGradient.data[index + 1] = yGradient.data[index];
           yGradient.data[index + 2] = yGradient.data[index];
           yGradient.data[index + 3] = 255;
@@ -243,10 +233,10 @@ class Stick {
           gradient.data[index + 3] = 255;
         }
       }
-      this.logComputeDataToCanvas(gray, 0);
-      this.logComputeDataToCanvas(xGradient, 1);
-      this.logComputeDataToCanvas(yGradient, 2);
-      this.logComputeDataToCanvas(gradient, 3);
+      this.logComputeDataToCanvas(gray, 1);
+      this.logComputeDataToCanvas(xGradient, 2);
+      this.logComputeDataToCanvas(yGradient, 3);
+      this.logComputeDataToCanvas(gradient, 4);
     }
 
     this.renderGame();
@@ -261,13 +251,18 @@ class Stick {
     const data = imageData.data;
     const threshold = 580;
     const newData = new ImageData(imageData.width, imageData.height);
+    const doIt = document.location.hash.indexOf("debug") !== -1;
     for (let i = 0; i < data.length; i += 4) {
       const bright = data[i] + data[i + 1] + data[i + 2];
       if (bright > threshold) {
         newData.data[i] = 255;
-      } else {
-        newData.data[i] = 0;
+        newData.data[i + 1] = 255;
+        newData.data[i + 2] = 255;
       }
+      newData.data[i + 3] = 255;
+    }
+    if (document.location.hash.indexOf("debug") !== -1) {
+      this.logComputeDataToCanvas(newData, 5);
     }
 
     // get all the square blobs

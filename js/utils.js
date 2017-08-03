@@ -134,14 +134,15 @@ class StickARUtils {
           indicesSet
         );
       }
+      const minScore = 0.9;
       const minArea = width * height * (1 / 50);
       if (indices.length > minArea) {
-        if (oldCorners && oldScore > 0.8 && oldScore > score) {
+        if (oldCorners && oldScore > minScore && oldScore > score) {
           return {
             corners: oldCorners,
             score: oldScore
           };
-        } else if (score > 0.8) {
+        } else if (score > minScore) {
           return { corners, score };
         }
       }
